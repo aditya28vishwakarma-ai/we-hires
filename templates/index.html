@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini ATS Kanban Board</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Student Recruitment Tracker (Mini ATS)</h1>
+    </header>
+
+    <div class="board">
+        <div class="column" data-stage="Applied" ondragover="allowDrop(event)" ondrop="drop(event)">
+            <h2>Applied</h2>
+            <div class="card-container" id="Applied"></div>
+        </div>
+
+        <div class="column" data-stage="Interviewing" ondragover="allowDrop(event)" ondrop="drop(event)">
+            <h2>Interviewing</h2>
+            <div class="card-container" id="Interviewing"></div>
+        </div>
+
+        <div class="column" data-stage="Technical Test" ondragover="allowDrop(event)" ondrop="drop(event)">
+            <h2>Technical Test</h2>
+            <div class="card-container" id="Technical Test"></div>
+        </div>
+
+        <div class="column" data-stage="Offered" ondragover="allowDrop(event)" ondrop="drop(event)">
+            <h2>Offered</h2>
+            <div class="card-container" id="Offered"></div>
+        </div>
+
+        <div class="column" data-stage="Rejected" ondragover="allowDrop(event)" ondrop="drop(event)">
+            <h2>Rejected</h2>
+            <div class="card-container" id="Rejected"></div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "name": "Travis Scott",
+    "roll_number": "CS2026-01",
+    "role": "Software Engineer",
+    "stage": "Rejected",
+    "tech_score": 46,
+    "is_locked": true
+  },
+  {
+    "id": 2,
+    "name": "Kanye West",
+    "roll_number": "CS2026-02",
+    "role": "Frontend Developer",
+    "stage": "Rejected",
+    "tech_score": 59,
+    "is_locked": true
+  },
+  {
+    "id": 3,
+    "name": "Charlie Brown",
+    "roll_number": "CS2026-03",
+    "role": "Data Analyst",
+    "stage": "Rejected",
+    "tech_score": 45,
+    "is_locked": true
+  },
+  {
+    "id": 4,
+    "name": "Eminem",
+    "roll_number": "CS2026-04",
+    "role": "DevOps Engineer",
+    "stage": "Rejected",
+    "tech_score": 55,
+    "is_locked": true
+  },
+  {
+    "id": 5,
+    "name": "Taylor Swieft",
+    "roll_number": "CS2026-05",
+    "role": "Backend Developer",
+    "stage": "Rejected",
+    "tech_score": 90,
+    "is_locked": false
+  }
+]
