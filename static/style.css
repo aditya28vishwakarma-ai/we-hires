@@ -68,3 +68,124 @@ header {
     font-size: 0.8rem;
     margin-top: 5px;
 }
+
+/* Score Input Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-card {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 24px 28px;
+    width: 320px;
+    max-width: 90%;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+
+.modal-card h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    color: #172b4d;
+}
+
+.modal-card p {
+    margin: 0 0 12px 0;
+    color: #44546f;
+    font-size: 0.9rem;
+}
+
+.modal-card input {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.modal-card input:focus {
+    outline: none;
+    border-color: #0052cc;
+}
+
+.modal-error {
+    color: #b91c1c;
+    font-size: 0.85rem;
+    min-height: 1.2em;
+    margin: 6px 0 0 0;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.modal-btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.modal-btn-primary {
+    background-color: #0052cc;
+    color: #fff;
+}
+
+.modal-btn-primary:hover {
+    background-color: #0747a6;
+}
+
+.modal-btn-secondary {
+    background-color: #ebecf0;
+    color: #172b4d;
+}
+
+.modal-btn-secondary:hover {
+    background-color: #dcdfe6;
+}
+
+/* Error Modal */
+.modal-card-error {
+    border-top: 4px solid #ef4444;
+}
+
+.modal-card-error h3 {
+    color: #b91c1c;
+}
+
+.modal-card-error p {
+    color: #44546f;
+    margin-bottom: 0;
+}
+
+/* Rejection Modal */
+.modal-card-rejection {
+    border-top: 4px solid #f59e0b;
+}
+
+.modal-card-rejection h3 {
+    color: #92400e;
+}
+
+.modal-card-rejection p {
+    color: #44546f;
+    margin-bottom: 0;
+}

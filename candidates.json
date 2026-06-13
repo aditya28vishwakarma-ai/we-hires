@@ -6,6 +6,7 @@
     "role": "Software Engineer",
     "stage": "Rejected",
     "tech_score": 46,
+    "interview_score": null,
     "is_locked": true
   },
   {
@@ -15,6 +16,7 @@
     "role": "Frontend Developer",
     "stage": "Rejected",
     "tech_score": 59,
+    "interview_score": null,
     "is_locked": true
   },
   {
@@ -24,6 +26,7 @@
     "role": "Data Analyst",
     "stage": "Rejected",
     "tech_score": 45,
+    "interview_score": null,
     "is_locked": true
   },
   {
@@ -33,6 +36,7 @@
     "role": "DevOps Engineer",
     "stage": "Rejected",
     "tech_score": 55,
+    "interview_score": null,
     "is_locked": true
   },
   {
@@ -41,7 +45,8 @@
     "roll_number": "CS2026-05",
     "role": "Backend Developer",
     "stage": "Rejected",
-    "tech_score": 90,
-    "is_locked": false
+    "tech_score": 80,
+    "interview_score": 70,
+    "is_locked": true
   }
 ]

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mini ATS Kanban Board</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/style.css?v=3">
 </head>
 <body>
 
@@ -39,6 +39,42 @@
         </div>
     </div>
 
-    <script src="/static/script.js"></script>
+    <!-- Score Input Modal -->
+    <div id="scoreModalOverlay" class="modal-overlay" style="display:none;">
+        <div class="modal-card">
+            <h3 id="scoreModalTitle">Enter Score</h3>
+            <p id="scoreModalDescription"></p>
+            <input type="number" id="scoreModalInput" min="0" max="100" placeholder="0 - 100">
+            <p id="scoreModalError" class="modal-error"></p>
+            <div class="modal-actions">
+                <button id="scoreModalCancel" class="modal-btn modal-btn-secondary">Cancel</button>
+                <button id="scoreModalSubmit" class="modal-btn modal-btn-primary">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal (blocked actions) -->
+    <div id="errorModalOverlay" class="modal-overlay" style="display:none;">
+        <div class="modal-card modal-card-error">
+            <h3 id="errorModalTitle">Action Not Allowed</h3>
+            <p id="errorModalMessage"></p>
+            <div class="modal-actions">
+                <button id="errorModalClose" class="modal-btn modal-btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejection Modal (candidate auto-rejected) -->
+    <div id="rejectionModalOverlay" class="modal-overlay" style="display:none;">
+        <div class="modal-card modal-card-rejection">
+            <h3 id="rejectionModalTitle">Candidate Rejected</h3>
+            <p id="rejectionModalMessage"></p>
+            <div class="modal-actions">
+                <button id="rejectionModalClose" class="modal-btn modal-btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js?v=3"></script>
 </body>
 </html>
