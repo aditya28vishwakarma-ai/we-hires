@@ -5,9 +5,9 @@
     "roll_number": "CS2026-01",
     "role": "Software Engineer",
     "stage": "Rejected",
-    "tech_score": 46,
+    "tech_score": null,
     "interview_score": null,
-    "is_locked": true
+    "is_locked": false
   },
   {
     "id": 2,
@@ -15,9 +15,9 @@
     "roll_number": "CS2026-02",
     "role": "Frontend Developer",
     "stage": "Rejected",
-    "tech_score": 59,
+    "tech_score": null,
     "interview_score": null,
-    "is_locked": true
+    "is_locked": false
   },
   {
     "id": 3,
@@ -25,9 +25,9 @@
     "roll_number": "CS2026-03",
     "role": "Data Analyst",
     "stage": "Rejected",
-    "tech_score": 45,
+    "tech_score": null,
     "interview_score": null,
-    "is_locked": true
+    "is_locked": false
   },
   {
     "id": 4,
@@ -35,9 +35,9 @@
     "roll_number": "CS2026-04",
     "role": "DevOps Engineer",
     "stage": "Rejected",
-    "tech_score": 55,
+    "tech_score": null,
     "interview_score": null,
-    "is_locked": true
+    "is_locked": false
   },
   {
     "id": 5,
@@ -45,8 +45,8 @@
     "roll_number": "CS2026-05",
     "role": "Backend Developer",
     "stage": "Rejected",
-    "tech_score": 80,
-    "interview_score": 70,
-    "is_locked": true
+    "tech_score": null,
+    "interview_score": null,
+    "is_locked": false
   }
 ]
