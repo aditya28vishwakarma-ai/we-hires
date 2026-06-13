@@ -51,6 +51,27 @@ header {
     cursor: grabbing;
 }
 
+/* Stage-based color accents */
+.candidate-card.stage-applied {
+    border-left: 5px solid #94a3b8; /* grey */
+}
+
+.candidate-card.stage-interviewing {
+    border-left: 5px solid #3b82f6; /* blue */
+}
+
+.candidate-card.stage-technical-test {
+    border-left: 5px solid #f59e0b; /* amber */
+}
+
+.candidate-card.stage-offered {
+    border-left: 5px solid #22c55e; /* green */
+}
+
+.candidate-card.stage-rejected {
+    border-left: 5px solid #ef4444; /* red */
+}
+
 /* Grayed out layout for Locked/Rejected candidates */
 .candidate-card.locked-card {
     background-color: #e2e8f0;
@@ -188,4 +209,560 @@ header {
 .modal-card-rejection p {
     color: #44546f;
     margin-bottom: 0;
+}
+
+/* Candidate Detail Modal */
+.detail-body p {
+    margin: 6px 0;
+    font-size: 0.95rem;
+    color: #172b4d;
+}
+
+.detail-body .detail-label {
+    font-weight: bold;
+    color: #44546f;
+}
+
+.detail-body .rejection-reason {
+    margin-top: 10px;
+    padding: 8px 10px;
+    background-color: #fef2f2;
+    border-left: 4px solid #ef4444;
+    border-radius: 4px;
+    color: #991b1b;
+    font-size: 0.9rem;
+}
+/* =========================================================
+   Result / Status Lookup Page (.candidate-page)
+   Self-contained design system — scoped to avoid clashing
+   with the board styles above.
+   ========================================================= */
+
+.candidate-page {
+    --cp-bg: #FAFAF7;
+    --cp-ink: #1C1C1E;
+    --cp-ink-soft: #6B6B6F;
+    --cp-line: #E5E2D9;
+    --cp-indigo: #5B6CFF;
+    --cp-green: #1E9E64;
+    --cp-red: #D14343;
+    --cp-card: #FFFFFF;
+
+    margin: 0;
+    background-color: var(--cp-bg);
+    color: var(--cp-ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+}
+
+.candidate-page * {
+    box-sizing: border-box;
+}
+
+.candidate-page .page {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+}
+
+.candidate-page .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cp-indigo);
+    margin: 0 0 8px 0;
+}
+
+.candidate-page h1 {
+    font-family: 'Sora', sans-serif;
+    font-weight: 800;
+    font-size: 2.1rem;
+    line-height: 1.15;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.01em;
+}
+
+.candidate-page .subtitle {
+    color: var(--cp-ink-soft);
+    font-size: 0.98rem;
+    margin: 0 0 36px 0;
+    max-width: 46ch;
+}
+
+/* --- Lookup Form --- */
+.candidate-page .lookup-form {
+    background-color: var(--cp-card);
+    border: 1px solid var(--cp-line);
+    border-radius: 14px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.candidate-page .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.candidate-page .field label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--cp-ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.candidate-page .field input {
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    padding: 12px 14px;
+    border: 1.5px solid var(--cp-line);
+    border-radius: 8px;
+    background-color: var(--cp-bg);
+    color: var(--cp-ink);
+    transition: border-color 0.15s ease;
+}
+
+.candidate-page .field input:focus {
+    outline: none;
+    border-color: var(--cp-indigo);
+}
+
+.candidate-page .field input::placeholder {
+    color: #B7B4AA;
+}
+
+.candidate-page .submit-btn {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    background-color: var(--cp-ink);
+    color: var(--cp-bg);
+    border: none;
+    border-radius: 8px;
+    padding: 13px 20px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+    margin-top: 4px;
+}
+
+.candidate-page .submit-btn:hover { background-color: var(--cp-indigo); }
+.candidate-page .submit-btn:active { transform: scale(0.98); }
+.candidate-page .submit-btn:disabled { opacity: 0.6; cursor: wait; }
+
+.candidate-page .form-error {
+    font-size: 0.9rem;
+    color: var(--cp-red);
+    font-weight: 500;
+    display: none;
+}
+
+.candidate-page .form-error.active { display: block; }
+
+/* --- Results --- */
+.candidate-page #resultsContainer {
+    margin-top: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.candidate-page .ticket {
+    background-color: var(--cp-card);
+    border: 1px solid var(--cp-line);
+    border-radius: 14px;
+    overflow: hidden;
+    animation: candidate-page-rise 0.4s ease-out;
+}
+
+@keyframes candidate-page-rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.candidate-page .ticket-header {
+    padding: 22px 26px;
+    border-bottom: 1px dashed var(--cp-line);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.candidate-page .ticket-header .role {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin: 0 0 4px 0;
+}
+
+.candidate-page .ticket-header .roll {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--cp-ink-soft);
+    letter-spacing: 0.03em;
+}
+
+.candidate-page .status-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 100px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.candidate-page .status-pill.s-applied { background-color: #EEEDE9; color: var(--cp-ink-soft); }
+.candidate-page .status-pill.s-interviewing,
+.candidate-page .status-pill.s-technical-test { background-color: #EAEBFF; color: var(--cp-indigo); }
+.candidate-page .status-pill.s-offered { background-color: #E5F6ED; color: var(--cp-green); }
+.candidate-page .status-pill.s-rejected { background-color: #FBEAEA; color: var(--cp-red); }
+
+/* --- Stage Track --- */
+.candidate-page .stage-track {
+    padding: 24px 26px 8px;
+    display: flex;
+    align-items: center;
+}
+
+.candidate-page .stage-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+    text-align: center;
+}
+
+.candidate-page .stage-step .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: var(--cp-line);
+    border: 2px solid var(--cp-line);
+    z-index: 2;
+    transition: all 0.2s ease;
+}
+
+.candidate-page .stage-step.done .dot {
+    background-color: var(--cp-indigo);
+    border-color: var(--cp-indigo);
+}
+
+.candidate-page .stage-step.current .dot {
+    background-color: var(--cp-indigo);
+    border-color: var(--cp-indigo);
+    box-shadow: 0 0 0 4px rgba(91, 108, 255, 0.18);
+}
+
+.candidate-page .stage-step.current.is-rejected .dot {
+    background-color: var(--cp-red);
+    border-color: var(--cp-red);
+    box-shadow: 0 0 0 4px rgba(209, 67, 67, 0.18);
+}
+
+.candidate-page .stage-step.current.is-offered .dot {
+    background-color: var(--cp-green);
+    border-color: var(--cp-green);
+    box-shadow: 0 0 0 4px rgba(30, 158, 100, 0.18);
+}
+
+.candidate-page .stage-step .connector {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background-color: var(--cp-line);
+    z-index: 1;
+}
+
+.candidate-page .stage-step:last-child .connector { display: none; }
+
+.candidate-page .stage-step.done .connector { background-color: var(--cp-indigo); }
+
+.candidate-page .stage-step .label {
+    margin-top: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--cp-ink-soft);
+    letter-spacing: 0.02em;
+}
+
+.candidate-page .stage-step.done .label,
+.candidate-page .stage-step.current .label { color: var(--cp-ink); }
+
+/* --- Detail rows --- */
+.candidate-page .ticket-body { padding: 4px 26px 24px; }
+
+.candidate-page .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--cp-line);
+    font-size: 0.92rem;
+}
+
+.candidate-page .detail-row:last-child { border-bottom: none; }
+.candidate-page .detail-row .key { color: var(--cp-ink-soft); }
+.candidate-page .detail-row .val { font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+
+.candidate-page .reason-box {
+    margin-top: 14px;
+    padding: 14px 16px;
+    background-color: #FBEAEA;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    color: #8A2A2A;
+    line-height: 1.5;
+}
+
+.candidate-page .reason-box strong {
+    display: block;
+    font-family: 'Sora', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    color: var(--cp-red);
+}
+
+.candidate-page .offer-box {
+    margin-top: 14px;
+    padding: 14px 16px;
+    background-color: #E5F6ED;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    color: #14633F;
+    line-height: 1.5;
+}
+
+.candidate-page .offer-box strong {
+    display: block;
+    font-family: 'Sora', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    color: var(--cp-green);
+}
+
+@media (max-width: 480px) {
+    .candidate-page .page { padding: 40px 18px 60px; }
+    .candidate-page h1 { font-size: 1.7rem; }
+    .candidate-page .ticket-header { flex-direction: column; }
+    .candidate-page .status-pill { align-self: flex-start; }
+    .candidate-page .stage-step .label { display: none; }
+}
+
+/* --- Dashboard additions for candidate.html --- */
+
+.candidate-page .dashboard-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 40px;
+}
+
+.candidate-page .avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--cp-ink);
+    color: var(--cp-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.candidate-page .header-text .greeting {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cp-indigo);
+    margin: 0 0 4px 0;
+}
+
+.candidate-page .header-text .name {
+    font-family: 'Sora', sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: var(--cp-ink);
+    margin: 0;
+}
+
+/* --- Section tabs --- */
+.candidate-page .section-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--cp-line);
+}
+
+.candidate-page .tab-btn {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    background: none;
+    border: none;
+    padding: 12px 4px;
+    color: var(--cp-ink-soft);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.candidate-page .tab-btn:hover {
+    color: var(--cp-ink);
+}
+
+.candidate-page .tab-btn.active {
+    color: var(--cp-indigo);
+    border-bottom-color: var(--cp-indigo);
+}
+
+.candidate-page .tab-panel {
+    display: none;
+}
+
+.candidate-page .tab-panel.active {
+    display: block;
+    animation: candidate-page-rise 0.35s ease-out;
+}
+
+/* --- Apply form select --- */
+.candidate-page .field select {
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    padding: 12px 14px;
+    border: 1.5px solid var(--cp-line);
+    border-radius: 8px;
+    background-color: var(--cp-bg);
+    color: var(--cp-ink);
+    transition: border-color 0.15s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236B6B6F' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+}
+
+.candidate-page .field select:focus {
+    outline: none;
+    border-color: var(--cp-indigo);
+}
+
+/* --- Success message --- */
+.candidate-page .form-success {
+    font-size: 0.9rem;
+    color: var(--cp-green);
+    font-weight: 500;
+    display: none;
+}
+
+.candidate-page .form-success.active {
+    display: block;
+}
+
+/* --- Empty state for status section --- */
+.candidate-page .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--cp-ink-soft);
+    font-size: 0.95rem;
+}
+
+.candidate-page .empty-state .empty-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+/* --- Refresh button --- */
+.candidate-page .refresh-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.candidate-page .refresh-row .section-title {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.candidate-page .icon-btn {
+    background: none;
+    border: 1px solid var(--cp-line);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--cp-ink-soft);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.candidate-page .icon-btn:hover {
+    border-color: var(--cp-indigo);
+    color: var(--cp-indigo);
+}
+
+.candidate-page .icon-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+/* --- Ticket interactivity --- */
+.candidate-page .ticket {
+    cursor: pointer;
+    transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.candidate-page .ticket:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    transform: translateY(-1px);
+}
+
+.candidate-page .ticket-body {
+    display: none;
+}
+
+.candidate-page .ticket.expanded .ticket-body {
+    display: block;
+    animation: candidate-page-rise 0.25s ease-out;
+}
+
+.candidate-page .ticket-header {
+    cursor: pointer;
+    position: relative;
+}
+
+.candidate-page .expand-hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--cp-ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 2px;
+}
+
+@media (max-width: 480px) {
+    .candidate-page .dashboard-header { gap: 12px; }
+    .candidate-page .header-text .name { font-size: 1.2rem; }
+    .candidate-page .section-tabs { gap: 4px; overflow-x: auto; }
 }
