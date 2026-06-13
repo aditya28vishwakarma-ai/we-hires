@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard | Mini ATS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css?v=7">
+</head>
+<body>
+<div class="candidate-page">
+
+    <div class="page">
+
+        <!-- Profile header (placeholder for future login) -->
+        <div class="dashboard-header">
+            <div class="avatar">?</div>
+            <div class="header-text">
+                <p class="greeting">Mini ATS · Candidate Dashboard</p>
+                <p class="name">Your Name</p>
+            </div>
+        </div>
+
+        <!-- Section tabs -->
+        <div class="section-tabs">
+            <button class="tab-btn active" data-tab="apply">Apply</button>
+            <button class="tab-btn" data-tab="status">My Status</button>
+        </div>
+
+        <!-- Apply Section -->
+        <div class="tab-panel active" id="tab-apply">
+            <form id="applyForm" class="lookup-form">
+                <div class="field">
+                    <label for="apply-name">Full name</label>
+                    <input type="text" id="apply-name" name="name" placeholder="e.g. Asha Rao" required autocomplete="name">
+                </div>
+                <div class="field">
+                    <label for="apply-roll">Roll number</label>
+                    <input type="text" id="apply-roll" name="roll_number" placeholder="e.g. CS2026-07" required autocomplete="off">
+                </div>
+                <div class="field">
+                    <label for="apply-role">Role you're applying for</label>
+                    <select id="apply-role" name="role" required>
+                        <option value="" disabled selected>Select a role</option>
+                        <option value="Software Engineer">Software Engineer</option>
+                        <option value="Frontend Developer">Frontend Developer</option>
+                        <option value="Backend Developer">Backend Developer</option>
+                        <option value="Data Analyst">Data Analyst</option>
+                        <option value="DevOps Engineer">DevOps Engineer</option>
+                    </select>
+                </div>
+                <button type="submit" class="submit-btn" id="applySubmitBtn">Submit application</button>
+                <p class="form-error" id="applyError"></p>
+                <p class="form-success" id="applySuccess"></p>
+            </form>
+        </div>
+
+        <!-- Status Section -->
+        <div class="tab-panel" id="tab-status">
+            <form id="statusForm" class="lookup-form">
+                <div class="field">
+                    <label for="status-name">Full name</label>
+                    <input type="text" id="status-name" name="name" placeholder="e.g. Asha Rao" required autocomplete="name">
+                </div>
+                <div class="field">
+                    <label for="status-roll">Roll number</label>
+                    <input type="text" id="status-roll" name="roll_number" placeholder="e.g. CS2026-07" required autocomplete="off">
+                </div>
+                <button type="submit" class="submit-btn" id="statusSubmitBtn">Check status</button>
+                <p class="form-error" id="statusError"></p>
+            </form>
+
+            <div id="statusResultsWrapper" style="display:none;">
+                <div class="refresh-row">
+                    <p class="section-title">Your applications</p>
+                    <button class="icon-btn" id="refreshBtn">Refresh</button>
+                </div>
+                <div id="resultsContainer"></div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    const STAGES = ['Applied', 'Interviewing', 'Technical Test', 'Offered'];
+    let lastLookup = null; // remembers last { name, roll_number } for refresh
+
+    // --- Tab switching ---
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+        });
+    });
+
+    // --- Apply form ---
+    document.getElementById('applyForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const btn = document.getElementById('applySubmitBtn');
+        const errorEl = document.getElementById('applyError');
+        const successEl = document.getElementById('applySuccess');
+
+        errorEl.classList.remove('active');
+        successEl.classList.remove('active');
+        errorEl.textContent = '';
+        successEl.textContent = '';
+        btn.disabled = true;
+        btn.textContent = 'Submitting…';
+
+        const payload = {
+            name: form.name.value,
+            roll_number: form.roll_number.value,
+            role: form.role.value
+        };
+
+        try {
+            const res = await fetch('/api/apply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                errorEl.textContent = data.error || 'Something went wrong. Please try again.';
+                errorEl.classList.add('active');
+            } else {
+                successEl.textContent = `Application submitted for ${payload.role}. You can track its progress in "My Status".`;
+                successEl.classList.add('active');
+                form.reset();
+            }
+        } catch (err) {
+            errorEl.textContent = 'Network error — please check your connection and try again.';
+            errorEl.classList.add('active');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Submit application';
+        }
+    });
+
+    // --- Status form ---
+    document.getElementById('statusForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        await fetchStatus(form.name.value, form.roll_number.value);
+    });
+
+    // --- Refresh button ---
+    document.getElementById('refreshBtn').addEventListener('click', async () => {
+        if (!lastLookup) return;
+        await fetchStatus(lastLookup.name, lastLookup.roll_number, true);
+    });
+
+    async function fetchStatus(name, roll_number, isRefresh = false) {
+        const btn = isRefresh
+            ? document.getElementById('refreshBtn')
+            : document.getElementById('statusSubmitBtn');
+        const errorEl = document.getElementById('statusError');
+        const resultsDiv = document.getElementById('resultsContainer');
+        const wrapper = document.getElementById('statusResultsWrapper');
+
+        errorEl.classList.remove('active');
+        errorEl.textContent = '';
+        btn.disabled = true;
+        const originalText = btn.textContent;
+        btn.textContent = isRefresh ? 'Refreshing…' : 'Checking…';
+
+        try {
+            const res = await fetch('/api/result', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, roll_number })
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                errorEl.textContent = data.error || 'Something went wrong. Please try again.';
+                errorEl.classList.add('active');
+                wrapper.style.display = 'none';
+            } else {
+                lastLookup = { name, roll_number };
+                resultsDiv.innerHTML = '';
+                if (data.results.length === 0) {
+                    resultsDiv.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📭</div>
+                            No applications found yet.
+                        </div>
+                    `;
+                } else {
+                    data.results.forEach(app => renderTicket(app, resultsDiv));
+                }
+                wrapper.style.display = 'block';
+            }
+        } catch (err) {
+            errorEl.textContent = 'Network error — please check your connection and try again.';
+            errorEl.classList.add('active');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    }
+
+    function renderTicket(app, container) {
+        const ticket = document.createElement('div');
+        ticket.className = 'ticket';
+
+        const stageSlug = app.stage.toLowerCase().replace(/\s+/g, '-');
+        const isRejected = app.stage === 'Rejected';
+        const isOffered = app.stage === 'Offered';
+
+        let html = `
+            <div class="ticket-header">
+                <div>
+                    <p class="role">${escapeHtml(app.role)}</p>
+                    <p class="roll">${escapeHtml(app.roll_number)}</p>
+                    <p class="expand-hint">Tap for details</p>
+                </div>
+                <span class="status-pill s-${stageSlug}">${app.stage}</span>
+            </div>
+        `;
+
+        // Determine which stage to highlight on the track.
+        let activeIndex;
+        if (isRejected) {
+            if (app.tech_score !== null && app.tech_score !== undefined) {
+                activeIndex = 2;
+            } else if (app.interview_score !== null && app.interview_score !== undefined) {
+                activeIndex = 1;
+            } else {
+                activeIndex = 0;
+            }
+        } else {
+            activeIndex = STAGES.indexOf(app.stage);
+            if (activeIndex === -1) activeIndex = 0;
+        }
+
+        html += '<div class="stage-track">';
+        STAGES.forEach((stage, i) => {
+            let cls = 'stage-step';
+            if (i < activeIndex) cls += ' done';
+            if (i === activeIndex) {
+                cls += ' current';
+                if (isRejected) cls += ' is-rejected';
+                if (isOffered) cls += ' is-offered';
+            }
+            html += `
+                <div class="${cls}">
+                    <div class="connector"></div>
+                    <div class="dot"></div>
+                    <div class="label">${stage}</div>
+                </div>
+            `;
+        });
+        html += '</div>';
+
+        html += '<div class="ticket-body">';
+
+        if (app.interview_score !== null && app.interview_score !== undefined) {
+            html += detailRow('Interview score', `${app.interview_score} / 100`);
+        }
+
+        if (app.tech_score !== null && app.tech_score !== undefined) {
+            html += detailRow('Technical test score', `${app.tech_score} / 100`);
+        }
+
+        if (isRejected && app.rejection_reason) {
+            html += `
+                <div class="reason-box">
+                    <strong>Why this didn't progress</strong>
+                    ${escapeHtml(app.rejection_reason)}
+                </div>
+            `;
+        }
+
+        if (isOffered) {
+            html += `
+                <div class="offer-box">
+                    <strong>Congratulations</strong>
+                    You've been offered this role. Check your email for next steps.
+                </div>
+            `;
+        }
+
+        html += '</div>';
+
+        ticket.innerHTML = html;
+
+        // Click to expand/collapse details
+        ticket.querySelector('.ticket-header').addEventListener('click', () => {
+            ticket.classList.toggle('expanded');
+        });
+
+        container.appendChild(ticket);
+    }
+
+    function detailRow(key, val) {
+        return `
+            <div class="detail-row">
+                <span class="key">${escapeHtml(key)}</span>
+                <span class="val">${escapeHtml(String(val))}</span>
+            </div>
+        `;
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+</script>
+
+</body>
+</html>

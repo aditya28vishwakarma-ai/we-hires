@@ -25,18 +25,27 @@ function fetchCandidates() {
                 const card = document.createElement('div');
                 card.className = 'candidate-card';
                 card.id = `candidate-${candidate.id}`;
+
+                // Stage-based color accent
+                const stageClassMap = {
+                    'Applied': 'stage-applied',
+                    'Interviewing': 'stage-interviewing',
+                    'Technical Test': 'stage-technical-test',
+                    'Offered': 'stage-offered',
+                    'Rejected': 'stage-rejected'
+                };
+                if (stageClassMap[candidate.stage]) {
+                    card.classList.add(stageClassMap[candidate.stage]);
+                }
                 
-                // Hide both scores while candidate is in Applied or Interviewing
-                const hideScores = candidate.stage === 'Applied' || candidate.stage === 'Interviewing';
-                const showTechScore = !hideScores && candidate.tech_score !== null && candidate.tech_score !== undefined;
-                const showInterviewScore = !hideScores && candidate.interview_score !== null && candidate.interview_score !== undefined;
+                // Simplified card content — name and role only
                 card.innerHTML = `
                     <strong>${candidate.name}</strong><br>
-                    <small>Roll: ${candidate.roll_number}</small><br>
                     <small>Role: ${candidate.role}</small>
-                    ${showInterviewScore ? `<br><span class="score-tag">Interview Score: ${candidate.interview_score}</span>` : ''}
-                    ${showTechScore ? `<br><span class="score-tag">Tech Score: ${candidate.tech_score}</span>` : ''}
                 `;
+
+                // Open detail modal on click
+                card.addEventListener('click', () => openDetailModal(candidate));
 
                 // Handle Lock Gate Rule visually and mechanically
                 if (candidate.is_locked) {
@@ -142,6 +151,49 @@ function drop(event) {
     // Normal moves (Applied <-> Interviewing, manual Rejected) — no score needed
     sendMoveRequest(candidateId, targetStage, null, null, { candidateName: candidate.name });
 }
+
+// --- Candidate Detail Modal ---
+const detailModalOverlay = document.getElementById('detailModalOverlay');
+const detailModalName = document.getElementById('detailModalName');
+const detailModalBody = document.getElementById('detailModalBody');
+const detailModalClose = document.getElementById('detailModalClose');
+
+function openDetailModal(candidate) {
+    detailModalName.textContent = candidate.name;
+
+    const hideScores = candidate.stage === 'Applied' || candidate.stage === 'Interviewing';
+
+    let bodyHtml = `
+        <p><span class="detail-label">Roll Number:</span> ${candidate.roll_number}</p>
+        <p><span class="detail-label">Role Applied:</span> ${candidate.role}</p>
+        <p><span class="detail-label">Current Stage:</span> ${candidate.stage}</p>
+    `;
+
+    if (!hideScores && candidate.interview_score !== null && candidate.interview_score !== undefined) {
+        bodyHtml += `<p><span class="detail-label">Interview Score:</span> ${candidate.interview_score}</p>`;
+    }
+
+    if (!hideScores && candidate.tech_score !== null && candidate.tech_score !== undefined) {
+        bodyHtml += `<p><span class="detail-label">Technical Test Score:</span> ${candidate.tech_score}</p>`;
+    }
+
+    if (candidate.stage === 'Rejected' && candidate.rejection_reason) {
+        bodyHtml += `<div class="rejection-reason"><strong>Rejection Reason:</strong> ${candidate.rejection_reason}</div>`;
+    }
+
+    detailModalBody.innerHTML = bodyHtml;
+    detailModalOverlay.style.display = 'flex';
+}
+
+function closeDetailModal() {
+    detailModalOverlay.style.display = 'none';
+}
+
+detailModalClose.addEventListener('click', closeDetailModal);
+
+detailModalOverlay.addEventListener('click', (e) => {
+    if (e.target === detailModalOverlay) closeDetailModal();
+});
 
 // --- Score Input Modal ---
 const scoreModalOverlay = document.getElementById('scoreModalOverlay');
