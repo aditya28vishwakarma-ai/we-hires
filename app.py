@@ -3,48 +3,128 @@ import json
 from flask import Flask, render_template, jsonify, request
 
 app = Flask(__name__)
-DATA_FILE = 'candidates.json'
+DATA_FILE = "candidates.json"
+
 
 # Helper function to read data safely
 def load_candidates():
     if not os.path.exists(DATA_FILE):
         return []
-    with open(DATA_FILE, 'r') as f:
+    with open(DATA_FILE, "r") as f:
         try:
             return json.load(f)
         except json.JSONDecodeError:
             return []
 
+
 # Helper function to write data safely
 def save_candidates(candidates):
-    with open(DATA_FILE, 'w') as f:
+    with open(DATA_FILE, "w") as f:
         json.dump(candidates, f, indent=2)
 
+
+VALID_ROLES = [
+    "Software Engineer",
+    "Frontend Developer",
+    "Backend Developer",
+    "Data Analyst",
+    "DevOps Engineer",
+]
+
+
 # 1. GET / — Render the board page
-@app.route('/')
+@app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template("index.html")
+
+
+# 1b. GET /apply — Render the student application form page
+@app.route("/apply")
+def apply_page():
+    return render_template("apply.html")
+
+
+# 1c. POST /api/apply — Student self-registration
+@app.route("/api/apply", methods=["POST"])
+def apply():
+    data = request.json or {}
+    name = (data.get("name") or "").strip()
+    roll_number = (data.get("roll_number") or "").strip().upper()
+    role = (data.get("role") or "").strip()
+
+    if not name or not roll_number or not role:
+        return (
+            jsonify({"error": "Missing required fields: name, roll_number, or role"}),
+            400,
+        )
+
+    if role not in VALID_ROLES:
+        return (
+            jsonify(
+                {"error": f"Invalid role. Choose one of: {', '.join(VALID_ROLES)}"}
+            ),
+            400,
+        )
+
+    candidates = load_candidates()
+
+    # Duplicate prevention: same roll number + same role
+    duplicate = any(
+        c["roll_number"].upper() == roll_number and c["role"] == role
+        for c in candidates
+    )
+    if duplicate:
+        return jsonify({"error": "You have already applied for this role."}), 409
+
+    new_id = max([c["id"] for c in candidates], default=0) + 1
+    new_candidate = {
+        "id": new_id,
+        "name": name,
+        "roll_number": roll_number,
+        "role": role,
+        "stage": "Applied",
+        "tech_score": None,
+        "interview_score": None,
+        "is_locked": False,
+    }
+
+    candidates.append(new_candidate)
+    save_candidates(candidates)
+    return (
+        jsonify(
+            {
+                "message": "Application submitted successfully!",
+                "candidate": new_candidate,
+            }
+        ),
+        201,
+    )
+
 
 # 2. GET /api/candidates — Return all candidates from JSON
-@app.route('/api/candidates', methods=['GET'])
+@app.route("/api/candidates", methods=["GET"])
 def get_candidates():
     return jsonify(load_candidates())
 
+
 # 3. POST /api/candidates — Add new candidate
-@app.route('/api/candidates', methods=['POST'])
+@app.route("/api/candidates", methods=["POST"])
 def add_candidate():
     data = request.json or {}
-    name = data.get('name')
-    roll_number = data.get('roll_number')
-    role = data.get('role')
+    name = data.get("name")
+    roll_number = data.get("roll_number")
+    role = data.get("role")
 
     if not name or not roll_number or not role:
-        return jsonify({"error": "Missing required fields: name, roll_number, or role"}), 400
+        return (
+            jsonify({"error": "Missing required fields: name, roll_number, or role"}),
+            400,
+        )
 
     candidates = load_candidates()
-    
+
     # Auto-increment ID strategy
-    new_id = max([c['id'] for c in candidates], default=0) + 1
+    new_id = max([c["id"] for c in candidates], default=0) + 1
 
     new_candidate = {
         "id": new_id,
@@ -53,76 +133,179 @@ def add_candidate():
         "role": role,
         "stage": "Applied",
         "tech_score": None,
-        "is_locked": False
+        "interview_score": None,
+        "is_locked": False,
     }
 
     candidates.append(new_candidate)
     save_candidates(candidates)
     return jsonify(new_candidate), 201
 
+
 # 4. POST /api/candidates/<id>/move — Handle stage transition + gate logic
-@app.route('/api/candidates/<int:cid>/move', methods=['POST'])
+@app.route("/api/candidates/<int:cid>/move", methods=["POST"])
 def move_candidate(cid):
     data = request.json or {}
-    target_stage = data.get('target_stage')
-    input_score = data.get('tech_score') # Optional in request body, depends on the stage
+    target_stage = data.get("target_stage")
+    input_score = data.get("tech_score")  # used for Technical Test -> Offered/Rejected
+    interview_score_input = data.get(
+        "interview_score"
+    )  # used for Interviewing -> Technical Test/Rejected
 
     candidates = load_candidates()
-    candidate = next((c for c in candidates if c['id'] == cid), None)
+    candidate = next((c for c in candidates if c["id"] == cid), None)
 
     if not candidate:
         return jsonify({"error": "Candidate not found"}), 404
 
-    # --- RULE 4: Permanent Lock ---
-    if candidate.get('is_locked', False):
-        return jsonify({"error": "Candidate card is locked. No further movements allowed."}), 403
+    VALID_STAGES = ["Applied", "Interviewing", "Technical Test", "Offered", "Rejected"]
 
-    # --- RULE 1: Score Requirement ---
-    # If explicitly moving to Technical Test (or skipping ahead), look for incoming score or existing score
-    if target_stage in ["Technical Test", "Offered"]:
-        # Use incoming score if provided; otherwise fall back to what they already have
-        score_to_validate = input_score if input_score is not None else candidate.get('tech_score')
-        
-        if score_to_validate is None:
-            return jsonify({"error": "Moving to this stage requires a technical score."}), 400
-        
+    # --- RULE 4: Permanent Lock (checked first, before anything else) ---
+    if candidate.get("is_locked", False):
+        return (
+            jsonify(
+                {"error": "Candidate card is locked. No further movements allowed."}
+            ),
+            403,
+        )
+
+    if target_stage not in VALID_STAGES:
+        return jsonify({"error": f"Invalid target_stage: {target_stage}"}), 400
+
+    # --- GATE: Interviewing -> Technical Test (requires interview_score, threshold 50) ---
+    if target_stage == "Technical Test":
+        # Sequencing check: must come from Interviewing, cannot skip Interview
+        if candidate["stage"] != "Interviewing":
+            return (
+                jsonify(
+                    {
+                        "error": "Candidate must complete the Interviewing stage before Technical Test."
+                    }
+                ),
+                400,
+            )
+
+        if interview_score_input is None:
+            return (
+                jsonify(
+                    {
+                        "error": "Moving to Technical Test requires an interview_score (0-100)."
+                    }
+                ),
+                400,
+            )
+
         try:
-            score_int = int(score_to_validate)
+            interview_score_int = int(interview_score_input)
+            if interview_score_int < 0 or interview_score_int > 100:
+                raise ValueError
+        except (ValueError, TypeError):
+            return (
+                jsonify(
+                    {"error": "Interview score must be an integer between 0 and 100."}
+                ),
+                400,
+            )
+
+        candidate["interview_score"] = interview_score_int
+
+        # Auto-rejection: interview_score < 50
+        if interview_score_int < 50:
+            candidate["stage"] = "Rejected"
+            candidate["is_locked"] = True
+            save_candidates(candidates)
+            return (
+                jsonify(
+                    {
+                        "message": "Candidate auto-rejected due to low interview score.",
+                        "candidate": candidate,
+                    }
+                ),
+                200,
+            )
+
+        candidate["stage"] = "Technical Test"
+        save_candidates(candidates)
+        return (
+            jsonify(
+                {"message": "Candidate updated successfully.", "candidate": candidate}
+            ),
+            200,
+        )
+
+    # --- GATE: Technical Test -> Offered/Rejected (requires tech_score, threshold 70) ---
+    if target_stage == "Offered":
+        # Sequencing check: must come from Technical Test
+        if candidate["stage"] != "Technical Test":
+            return (
+                jsonify(
+                    {
+                        "error": "Candidate must complete the Technical Test stage before being Offered."
+                    }
+                ),
+                400,
+            )
+
+        if input_score is None:
+            return (
+                jsonify({"error": "Moving to Offered requires a tech_score (0-100)."}),
+                400,
+            )
+
+        try:
+            score_int = int(input_score)
             if score_int < 0 or score_int > 100:
                 raise ValueError
         except (ValueError, TypeError):
-            return jsonify({"error": "Technical score must be an integer between 0 and 100."}), 400
-        
-        # Update the candidate's tracking score if a valid one was passed
-        if input_score is not None:
-            candidate['tech_score'] = int(input_score)
+            return (
+                jsonify(
+                    {"error": "Technical score must be an integer between 0 and 100."}
+                ),
+                400,
+            )
 
-    # --- RULE 2: Auto-Rejection ---
-    current_score = candidate.get('tech_score')
-    if current_score is not None and current_score < 70:
-        candidate['stage'] = "Rejected"
-        candidate['is_locked'] = True
+        candidate["tech_score"] = score_int
+
+        # Auto-rejection: tech_score < 70
+        if score_int < 70:
+            candidate["stage"] = "Rejected"
+            candidate["is_locked"] = True
+            save_candidates(candidates)
+            return (
+                jsonify(
+                    {
+                        "message": "Candidate auto-rejected due to low technical score.",
+                        "candidate": candidate,
+                    }
+                ),
+                200,
+            )
+
+        candidate["stage"] = "Offered"
         save_candidates(candidates)
-        return jsonify({
-            "message": "Candidate auto-rejected due to low technical score.",
-            "candidate": candidate
-        }), 200
+        return (
+            jsonify(
+                {"message": "Candidate updated successfully.", "candidate": candidate}
+            ),
+            200,
+        )
 
-    # --- RULE 3: Offer Confirmation Validation ---
-    if target_stage == "Offered":
-        # Validate they are coming from Technical Test and have a passing grade
-        if candidate['stage'] != "Technical Test" or current_score is None or current_score < 70:
-            return jsonify({"error": "Candidates can only be offered if they pass the Technical Test stage."}), 400
+    # Manual rejection from any stage
+    if target_stage == "Rejected":
+        candidate["stage"] = "Rejected"
+        candidate["is_locked"] = True
+        save_candidates(candidates)
+        return jsonify({"message": "Candidate rejected.", "candidate": candidate}), 200
 
-    # If all rules pass, update the stage normally
-    if target_stage:
-        candidate['stage'] = target_stage
+    # Normal moves: Applied <-> Interviewing
+    candidate["stage"] = target_stage
 
     save_candidates(candidates)
-    return jsonify({
-        "message": "Candidate updated successfully.",
-        "candidate": candidate
-    }), 200
+    return (
+        jsonify({"message": "Candidate updated successfully.", "candidate": candidate}),
+        200,
+    )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run(debug=True, port=5000)
