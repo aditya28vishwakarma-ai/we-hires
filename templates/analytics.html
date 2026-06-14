@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Analytics | WeHires</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/portal.css">
+<style>
+.canvas { overflow-y:auto; }
+
+/* Page header */
+.ana-header { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:8px; }
+.ana-header h2 { font-size:30px; font-weight:700; letter-spacing:-0.01em; }
+.ana-header p  { color:var(--on-surface-variant); margin-top:4px; font-size:15px; }
+.ana-controls  { display:flex; gap:10px; }
+
+/* KPI grid */
+.kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
+.kpi-card { background:var(--surface-container-lowest); border:1px solid var(--outline-variant); border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+.kpi-top  { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+.kpi-icon { width:40px; height:40px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+.kpi-icon.blue   { background:rgba(79,70,229,0.1);  color:var(--primary-container); }
+.kpi-icon.green  { background:rgba(111,251,190,0.2); color:var(--tertiary); }
+.kpi-icon.amber  { background:rgba(245,158,11,0.15); color:#b45309; }
+.kpi-icon.red    { background:var(--error-container); color:var(--error); }
+.kpi-delta { font-size:12px; font-weight:700; padding:2px 8px; border-radius:100px; }
+.kpi-delta.pos { background:rgba(111,251,190,0.2); color:var(--tertiary); }
+.kpi-delta.neg { background:var(--error-container); color:var(--error); }
+.kpi-label { font-size:13px; color:var(--on-surface-variant); font-weight:500; margin-bottom:4px; }
+.kpi-value { font-size:26px; font-weight:800; color:var(--on-surface); }
+
+/* Main grid */
+.ana-grid { display:grid; grid-template-columns:1fr 320px; gap:20px; }
+
+/* Heatmap */
+.heatmap-panel { background:var(--surface-container-lowest); border:1px solid var(--outline-variant); border-radius:12px; padding:24px; }
+.heatmap-panel h3 { font-size:18px; font-weight:700; }
+.heatmap-panel .sub { font-size:14px; color:var(--on-surface-variant); margin-top:2px; margin-bottom:20px; }
+.heatmap-legend { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--on-surface-variant); }
+.heatmap-legend .swatches { display:flex; gap:4px; }
+.heatmap-legend .swatch { width:16px; height:16px; border-radius:3px; }
+
+.heatmap-wrap { display:grid; grid-template-columns:40px 1fr; gap:8px; margin-top:16px; }
+.heatmap-days  { display:flex; flex-direction:column; gap:8px; padding-top:24px; }
+.heatmap-day   { height:28px; display:flex; align-items:center; font-size:12px; color:var(--on-surface-variant); justify-content:flex-end; padding-right:8px; }
+.heatmap-grid  { display:flex; flex-direction:column; gap:8px; }
+.heatmap-hours { display:grid; grid-template-columns:repeat(12,1fr); gap:4px; margin-bottom:4px; }
+.heatmap-hour  { font-size:11px; color:var(--on-surface-variant); text-align:center; }
+.heatmap-row   { display:grid; grid-template-columns:repeat(12,1fr); gap:4px; }
+.hcell { height:28px; border-radius:4px; cursor:pointer; transition:transform 0.15s; }
+.hcell:hover   { transform:scale(1.15); z-index:10; position:relative; }
+.hcell.l0 { background:var(--surface-container); }
+.hcell.l1 { background:var(--primary-fixed); }
+.hcell.l2 { background:var(--primary-fixed-dim); }
+.hcell.l3 { background:var(--primary-container); opacity:0.7; }
+.hcell.l4 { background:var(--on-primary-fixed-variant); }
+
+/* Team efficiency */
+.team-panel { background:var(--surface-container-lowest); border:1px solid var(--outline-variant); border-radius:12px; padding:24px; }
+.team-panel h3 { font-size:18px; font-weight:700; }
+.team-panel .sub { font-size:14px; color:var(--on-surface-variant); margin-top:2px; margin-bottom:20px; }
+.team-list { display:flex; flex-direction:column; gap:20px; }
+.team-member .tm-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.tm-info { display:flex; align-items:center; gap:10px; }
+.tm-avatar { width:32px; height:32px; border-radius:50%; background:var(--secondary-container); color:var(--on-secondary-container); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; }
+.tm-name { font-size:14px; font-weight:700; }
+.tm-badge { font-size:12px; font-weight:700; }
+.tm-badge.top   { color:var(--tertiary); }
+.tm-badge.ok    { color:var(--on-surface-variant); }
+.tm-badge.alert { color:var(--error); }
+.tm-bar-wrap { height:8px; background:var(--surface-container); border-radius:100px; overflow:hidden; }
+.tm-bar { height:100%; border-radius:100px; background:var(--primary); }
+.tm-bar.red { background:var(--error); }
+.tm-stats { display:flex; justify-content:space-between; margin-top:6px; font-size:12px; color:var(--on-surface-variant); }
+.view-rankings { width:100%; margin-top:20px; padding:10px; border:1px solid var(--primary); color:var(--primary); border-radius:8px; font-size:14px; font-weight:700; transition:background 0.15s; }
+.view-rankings:hover { background:rgba(53,37,205,0.05); }
+
+/* Pipeline velocity chart */
+.velocity-panel { background:var(--surface-container-lowest); border:1px solid var(--outline-variant); border-radius:12px; padding:24px; margin-top:20px; }
+.vel-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; }
+.vel-header h3 { font-size:18px; font-weight:700; }
+.vel-header .sub { font-size:14px; color:var(--on-surface-variant); margin-top:2px; }
+.vel-legend { display:flex; gap:16px; font-size:12px; color:var(--on-surface-variant); }
+.vel-legend span { display:flex; align-items:center; gap:6px; }
+.vel-dot { width:10px; height:10px; border-radius:50%; }
+
+.vel-chart { display:flex; align-items:flex-end; justify-content:space-around; gap:16px; height:200px; border-bottom:1px solid var(--outline-variant); padding:0 16px 8px; }
+.vel-stage { display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; }
+.vel-bars  { display:flex; align-items:flex-end; justify-content:center; gap:6px; }
+.vel-bar   { width:32px; border-radius:4px 4px 0 0; transition:height 0.3s ease; }
+.vel-bar.ref { background:var(--surface-container-highest); }
+.vel-bar.cur { background:var(--primary); }
+.vel-bar-label { font-size:10px; font-weight:700; color:white; text-align:center; padding-bottom:4px; }
+.vel-stage-name { font-size:13px; font-weight:600; color:var(--on-surface); }
+
+.vel-insight { display:flex; align-items:flex-start; gap:12px; margin-top:20px; padding:14px; background:rgba(226,223,255,0.4); border-radius:10px; }
+.vel-insight .material-symbols-outlined { color:var(--primary); flex-shrink:0; }
+.vel-insight p { font-size:14px; color:var(--on-primary-fixed-variant); line-height:1.5; }
+
+/* FAB */
+.fab { position:fixed; bottom:32px; right:32px; width:56px; height:56px; background:var(--primary); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 16px rgba(53,37,205,0.3); transition:transform 0.15s; }
+.fab:hover { transform:scale(1.1); }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="logo">W</div>
+        <div><h1>WeHires</h1><p>Recruiter Portal</p></div>
+    </div>
+    <nav>
+        <a href="/dashboard"><span class="material-symbols-outlined">dashboard</span> Dashboard</a>
+        <a href="/candidates-board"><span class="material-symbols-outlined">person_search</span> Candidates</a>
+        <a href="/analytics" class="active"><span class="material-symbols-outlined">analytics</span> Analytics</a>
+        <a href="/settings"><span class="material-symbols-outlined">settings</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="avatar-sm"><span class="material-symbols-outlined" style="color:var(--outline)">person</span></div>
+        <div>
+            <div class="user-name">{{ recruiter_name }}</div>
+            <div class="user-role">Admin</div>
+        </div>
+    </div>
+</aside>
+
+<div class="main-wrapper">
+    <header class="topbar">
+        <h2>Student Recruitment Tracker</h2>
+        <div class="topbar-right">
+            <a href="/settings" class="settings-btn" title="Settings">
+                <span class="material-symbols-outlined">settings</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="canvas">
+        <div class="canvas-inner">
+
+            <div class="ana-header">
+                <div>
+                    <nav style="font-size:12px;color:var(--on-surface-variant);margin-bottom:6px">
+                        Analytics <span style="margin:0 4px">›</span> <span style="color:var(--primary);font-weight:600">Operational Efficiency</span>
+                    </nav>
+                    <h2>Recruitment Analytics</h2>
+                    <p>Monitoring candidate pipeline health and stage distribution.</p>
+                </div>
+                <div class="ana-controls">
+                    <div style="display:flex;background:var(--surface-container);border-radius:8px;padding:4px;gap:2px">
+                        <button style="padding:6px 14px;background:white;border-radius:6px;font-size:13px;font-weight:600;color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,0.08)">Daily</button>
+                        <button style="padding:6px 14px;font-size:13px;font-weight:600;color:var(--on-surface-variant)">Weekly</button>
+                        <button style="padding:6px 14px;font-size:13px;font-weight:600;color:var(--on-surface-variant)">Monthly</button>
+                    </div>
+                    <button class="btn-outline"><span class="material-symbols-outlined" style="font-size:15px">filter_list</span> Filters</button>
+                    <button class="btn-primary"><span class="material-symbols-outlined" style="font-size:15px">download</span> Export Report</button>
+                </div>
+            </div>
+
+            <!-- KPI strip -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-top">
+                        <div class="kpi-icon blue"><span class="material-symbols-outlined">group</span></div>
+                        <span class="kpi-delta pos">+0%</span>
+                    </div>
+                    <p class="kpi-label">Total Candidates</p>
+                    <p class="kpi-value">{{ total }}</p>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-top">
+                        <div class="kpi-icon green"><span class="material-symbols-outlined">thumb_up</span></div>
+                        <span class="kpi-delta pos">Live</span>
+                    </div>
+                    <p class="kpi-label">Offer Rate</p>
+                    <p class="kpi-value">{{ offer_rate }}%</p>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-top">
+                        <div class="kpi-icon amber"><span class="material-symbols-outlined">grade</span></div>
+                        <span class="kpi-delta pos">Avg</span>
+                    </div>
+                    <p class="kpi-label">Avg Interview Score</p>
+                    <p class="kpi-value">{{ avg_interview }}/100</p>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-top">
+                        <div class="kpi-icon red"><span class="material-symbols-outlined">trending_down</span></div>
+                        <span class="kpi-delta neg">Live</span>
+                    </div>
+                    <p class="kpi-label">Rejection Rate</p>
+                    <p class="kpi-value">{{ rejection_rate }}%</p>
+                </div>
+            </div>
+
+            <!-- Heatmap + Team -->
+            <div class="ana-grid">
+                <div class="heatmap-panel">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                        <div>
+                            <h3>Activity Heatmap</h3>
+                            <p class="sub">Peak hours for candidate reviews &amp; interviews</p>
+                        </div>
+                        <div class="heatmap-legend">
+                            <span>Low</span>
+                            <div class="swatches">
+                                <div class="swatch" style="background:var(--surface-container)"></div>
+                                <div class="swatch" style="background:var(--primary-fixed)"></div>
+                                <div class="swatch" style="background:var(--primary-fixed-dim)"></div>
+                                <div class="swatch" style="background:var(--primary-container);opacity:0.7"></div>
+                                <div class="swatch" style="background:var(--on-primary-fixed-variant)"></div>
+                            </div>
+                            <span>High</span>
+                        </div>
+                    </div>
+                    <div class="heatmap-wrap">
+                        <div class="heatmap-days">
+                            <div class="heatmap-day">Mon</div>
+                            <div class="heatmap-day">Tue</div>
+                            <div class="heatmap-day">Wed</div>
+                            <div class="heatmap-day">Thu</div>
+                            <div class="heatmap-day">Fri</div>
+                        </div>
+                        <div class="heatmap-grid">
+                            <div class="heatmap-hours">
+                                <div class="heatmap-hour">08</div><div class="heatmap-hour">09</div>
+                                <div class="heatmap-hour">10</div><div class="heatmap-hour">11</div>
+                                <div class="heatmap-hour">12</div><div class="heatmap-hour">13</div>
+                                <div class="heatmap-hour">14</div><div class="heatmap-hour">15</div>
+                                <div class="heatmap-hour">16</div><div class="heatmap-hour">17</div>
+                                <div class="heatmap-hour">18</div><div class="heatmap-hour">19</div>
+                            </div>
+                            <!-- Mon -->
+                            <div class="heatmap-row">
+                                <div class="hcell l1"></div><div class="hcell l4"></div><div class="hcell l4"></div>
+                                <div class="hcell l2"></div><div class="hcell l1"></div><div class="hcell l0"></div>
+                                <div class="hcell l3"></div><div class="hcell l4"></div><div class="hcell l2"></div>
+                                <div class="hcell l3"></div><div class="hcell l1"></div><div class="hcell l0"></div>
+                            </div>
+                            <!-- Tue -->
+                            <div class="heatmap-row">
+                                <div class="hcell l0"></div><div class="hcell l2"></div><div class="hcell l3"></div>
+                                <div class="hcell l4"></div><div class="hcell l4"></div><div class="hcell l1"></div>
+                                <div class="hcell l2"></div><div class="hcell l3"></div><div class="hcell l4"></div>
+                                <div class="hcell l3"></div><div class="hcell l2"></div><div class="hcell l1"></div>
+                            </div>
+                            <!-- Wed -->
+                            <div class="heatmap-row">
+                                <div class="hcell l3"></div><div class="hcell l4"></div><div class="hcell l4"></div>
+                                <div class="hcell l3"></div><div class="hcell l2"></div><div class="hcell l1"></div>
+                                <div class="hcell l1"></div><div class="hcell l3"></div><div class="hcell l4"></div>
+                                <div class="hcell l4"></div><div class="hcell l3"></div><div class="hcell l1"></div>
+                            </div>
+                            <!-- Thu -->
+                            <div class="heatmap-row">
+                                <div class="hcell l1"></div><div class="hcell l2"></div><div class="hcell l3"></div>
+                                <div class="hcell l3"></div><div class="hcell l0"></div><div class="hcell l2"></div>
+                                <div class="hcell l3"></div><div class="hcell l4"></div><div class="hcell l4"></div>
+                                <div class="hcell l3"></div><div class="hcell l1"></div><div class="hcell l1"></div>
+                            </div>
+                            <!-- Fri -->
+                            <div class="heatmap-row">
+                                <div class="hcell l2"></div><div class="hcell l2"></div><div class="hcell l3"></div>
+                                <div class="hcell l1"></div><div class="hcell l1"></div><div class="hcell l0"></div>
+                                <div class="hcell l0"></div><div class="hcell l1"></div><div class="hcell l2"></div>
+                                <div class="hcell l2"></div><div class="hcell l0"></div><div class="hcell l0"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Efficiency -->
+                <div class="team-panel">
+                    <h3>Team Efficiency</h3>
+                    <p class="sub">Recruiter performance scorecards</p>
+                    <div class="team-list" id="teamList">
+                        <!-- Populated by JS from recruiter log -->
+                    </div>
+                    <button class="view-rankings">View Team Rankings</button>
+                </div>
+            </div>
+
+            <!-- Pipeline Velocity -->
+            <div class="velocity-panel">
+                <div class="vel-header">
+                    <div>
+                        <h3>Pipeline Velocity</h3>
+                        <p class="sub">Candidate count in each hiring stage (live)</p>
+                    </div>
+                    <div class="vel-legend">
+                        <span><div class="vel-dot" style="background:var(--primary)"></div> Current</span>
+                        <span><div class="vel-dot" style="background:var(--surface-container-highest)"></div> Benchmark</span>
+                    </div>
+                </div>
+                <div class="vel-chart">
+                    {% set stage_data = [
+                        ('Applied', stage_counts.Applied, 5),
+                        ('Interviewing', stage_counts.Interviewing, 3),
+                        ('Technical Test', stage_counts['Technical Test'], 4),
+                        ('Offered', stage_counts.Offered, 2),
+                        ('Rejected', stage_counts.Rejected, 6)
+                    ] %}
+                    {% for name, count, benchmark in stage_data %}
+                    {% set cur_h = [count * 20, 160]|min %}
+                    {% set ref_h = [benchmark * 20, 160]|min %}
+                    <div class="vel-stage">
+                        <div class="vel-bars">
+                            <div class="vel-bar ref" style="height:'{{ ref_h }}'px" title="Benchmark: {{ benchmark }}"></div>
+                            <div class="vel-bar cur" style="height:'{{ [cur_h,8]|max }}'px" title="{{ name }}: {{ count }}">
+                                {% if count > 0 %}<div class="vel-bar-label">{{ count }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <span class="vel-stage-name">{{ name }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="vel-insight">
+                    <span class="material-symbols-outlined">info</span>
+                    <p><strong>Insight:</strong> Avg Technical Test Score: <strong>{{ avg_tech }}/100</strong>. Offer rate is <strong>{{ offer_rate }}%</strong>. {{ total - stage_counts.Rejected }} candidates are still active in the pipeline.</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<button class="fab" title="Schedule Interviews">
+    <span class="material-symbols-outlined" style="font-size:28px">add</span>
+</button>
+
+<script>
+// Populate team efficiency from recruiter log
+fetch('/api/recruiter-log')
+    .then(r => r.json())
+    .then(log => {
+        const list = document.getElementById('teamList');
+        if (!log.length) {
+            list.innerHTML = '<p style="color:var(--on-surface-variant);font-size:14px;text-align:center;padding:20px 0">No recruiter sessions logged yet.</p>';
+            return;
+        }
+        const sorted = log.sort((a,b) => b.login_count - a.login_count);
+        const max = sorted[0].login_count || 1;
+        list.innerHTML = sorted.map((r, i) => {
+            const pct = Math.round((r.login_count / max) * 100);
+            const badges = ['Top Performer','On Target','Needs Follow-up'];
+            const bclasses = ['top','ok','alert'];
+            const bi = Math.min(i, 2);
+            return `
+            <div class="team-member">
+                <div class="tm-top">
+                    <div class="tm-info">
+                        <div class="tm-avatar">${r.initials}</div>
+                        <span class="tm-name">${r.name}</span>
+                    </div>
+                    <span class="tm-badge ${bclasses[bi]}">${badges[bi]}</span>
+                </div>
+                <div class="tm-bar-wrap">
+                    <div class="tm-bar ${bi===2?'red':''}" style="width:${pct}%"></div>
+                </div>
+                <div class="tm-stats">
+                    <span>Sessions: ${r.login_count}</span>
+                    <span>Last: ${r.last_login.slice(0,10)}</span>
+                </div>
+            </div>`;
+        }).join('');
+    });
+
+// Heatmap tooltips
+document.querySelectorAll('.hcell').forEach(cell => {
+    cell.addEventListener('mouseenter', () => {
+        const v = Math.floor(Math.random() * 20) + 5;
+        cell.title = `${v} sessions`;
+    });
+});
+</script>
+</body>
+</html>

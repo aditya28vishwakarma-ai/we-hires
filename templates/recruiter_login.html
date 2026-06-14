@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Recruiter Login | WeHires</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#f8f9ff;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+.login-wrap{width:420px;max-width:90vw;}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:40px;justify-content:center;}
+.brand-logo{width:44px;height:44px;border-radius:50%;background:#3525cd;color:white;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;}
+.brand h1{font-size:24px;font-weight:800;color:#3525cd;}
+.brand p{font-size:12px;color:#464555;margin-top:2px;}
+.card{background:white;border-radius:16px;padding:36px;border:1px solid #c7c4d8;box-shadow:0 4px 24px rgba(53,37,205,0.07);}
+.card h2{font-size:22px;font-weight:700;color:#0b1c30;margin-bottom:6px;}
+.card .sub{font-size:14px;color:#464555;margin-bottom:28px;}
+.field{margin-bottom:18px;}
+.field label{display:block;font-size:12px;font-weight:600;color:#464555;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:7px;}
+.field input{width:100%;padding:12px 14px;border:1.5px solid #c7c4d8;border-radius:9px;font-family:inherit;font-size:15px;color:#0b1c30;background:#f8f9ff;transition:border-color 0.15s;}
+.field input:focus{outline:none;border-color:#3525cd;background:white;}
+.submit-btn{width:100%;padding:13px;background:#3525cd;color:white;border:none;border-radius:9px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:opacity 0.15s;margin-top:6px;}
+.submit-btn:hover{opacity:0.9;}
+.divider{text-align:center;color:#464555;font-size:13px;margin:20px 0;position:relative;}
+.divider::before,.divider::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:#c7c4d8;}
+.divider::before{left:0}.divider::after{right:0}
+.guest-btn{width:100%;padding:12px;background:white;color:#3525cd;border:1.5px solid #3525cd;border-radius:9px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.15s;text-decoration:none;}
+.guest-btn:hover{background:#f8f9ff;}
+.material-symbols-outlined{vertical-align:middle;line-height:1;}
+</style>
+</head>
+<body>
+<div class="login-wrap">
+    <div class="brand">
+        <div class="brand-logo">W</div>
+        <div><h1>WeHires</h1><p>Recruiter Portal</p></div>
+    </div>
+    <div class="card">
+        <h2>Welcome back</h2>
+        <p class="sub">Enter your name to access the recruiter dashboard.</p>
+        <form method="POST" action="/login">
+            <div class="field">
+                <label>Your Name</label>
+                <input type="text" name="name" placeholder="e.g. Jane Recruiter" required autofocus>
+            </div>
+            <button type="submit" class="submit-btn">
+                <span class="material-symbols-outlined" style="font-size:18px;margin-right:4px">login</span>
+                Enter Portal
+            </button>
+        </form>
+        <div class="divider">or</div>
+        <a href="/candidate" class="guest-btn">
+            <span class="material-symbols-outlined" style="font-size:18px">person</span>
+            Continue as Candidate
+        </a>
+    </div>
+</div>
+</body>
+</html>

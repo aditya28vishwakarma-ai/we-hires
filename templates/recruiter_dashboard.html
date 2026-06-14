@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard | WeHires</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/portal.css">
+<style>
+.page-header { display:flex; justify-content:space-between; align-items:flex-end; }
+.page-header h1 { font-size:30px; font-weight:700; letter-spacing:-0.01em; }
+.page-header p  { color:var(--on-surface-variant); margin-top:4px; }
+
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:24px; }
+.stat-card  { padding:20px; }
+.stat-label { font-size:12px; font-weight:500; color:var(--on-surface-variant); margin-bottom:4px; }
+.stat-value { font-size:28px; font-weight:800; color:var(--on-surface); }
+.stat-value.c-blue  { color:var(--primary); }
+.stat-value.c-green { color:var(--tertiary); }
+.stat-value.c-red   { color:var(--error); }
+
+.bento { display:grid; grid-template-columns:1fr 340px; gap:24px; }
+
+.panel-hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+.panel-hdr h3 { font-size:18px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.panel-hdr h3 .material-symbols-outlined { color:var(--primary); }
+.panel-hdr a  { font-size:14px; font-weight:600; color:var(--primary); }
+.panel-hdr a:hover { text-decoration:underline; }
+
+/* Activity feed */
+.activity-list { display:flex; flex-direction:column; gap:20px; }
+.activity-item { display:flex; gap:14px; }
+.act-avatar {
+    width:40px; height:40px; border-radius:50%; flex-shrink:0;
+    background-color:var(--secondary-container);
+    color:var(--on-secondary-container);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:14px;
+}
+.act-body {
+    flex:1; background:var(--surface-container-lowest);
+    border:1px solid var(--outline-variant);
+    border-radius:8px; padding:14px;
+}
+.act-body .act-name { font-size:14px; font-weight:600; }
+.act-body .act-meta { font-size:12px; color:var(--on-surface-variant); margin-top:2px; }
+.act-body .act-text { font-size:14px; color:var(--on-surface-variant); margin-top:8px; line-height:1.5; }
+
+.empty-activity {
+    text-align:center; padding:40px 20px;
+    color:var(--on-surface-variant); font-size:15px;
+}
+.empty-activity .material-symbols-outlined { font-size:40px; display:block; margin-bottom:12px; opacity:0.4; }
+
+/* Feedback pending */
+.feedback-panel { border-top:4px solid var(--error); }
+.feedback-panel h3 { font-size:18px; font-weight:700; display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.feedback-panel h3 .material-symbols-outlined { color:var(--error); }
+.feedback-desc { font-size:14px; color:var(--on-surface-variant); margin-bottom:16px; }
+.feedback-items { display:flex; flex-direction:column; gap:10px; }
+.feedback-item {
+    display:flex; justify-content:space-between; align-items:center;
+    background:rgba(255,218,214,0.25); padding:12px; border-radius:8px;
+}
+.feedback-item-left { display:flex; align-items:center; gap:10px; }
+.feed-avatar {
+    width:32px; height:32px; border-radius:50%;
+    background:var(--secondary-container); color:var(--on-secondary-container);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:13px; flex-shrink:0;
+}
+.feed-name { font-size:14px; font-weight:600; }
+.feed-role { font-size:12px; color:var(--error); margin-top:1px; }
+.feed-bell {
+    width:32px; height:32px; border-radius:50%; display:flex;
+    align-items:center; justify-content:center; color:var(--primary);
+    transition:background 0.15s;
+}
+.feed-bell:hover { background:rgba(79,70,229,0.1); }
+
+.no-pending { text-align:center; padding:24px; color:var(--on-surface-variant); font-size:14px; }
+
+/* Active roles */
+.roles-panel h3 { font-size:18px; font-weight:700; margin-bottom:16px; }
+.roles-list { display:flex; flex-direction:column; gap:12px; }
+.role-item {
+    border:1px solid var(--outline-variant); border-radius:8px; padding:12px;
+    cursor:pointer; transition:border-color 0.15s, box-shadow 0.15s;
+}
+.role-item:hover { border-color:var(--primary-container); box-shadow:0 2px 8px rgba(53,37,205,0.08); }
+.role-item-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; gap:8px; }
+.role-name { font-size:14px; font-weight:600; }
+.role-pill { font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; white-space:nowrap; }
+.role-pill.has-finalists { background:var(--tertiary-container); color:var(--on-tertiary-container); }
+.role-pill.sourcing      { background:var(--surface-variant); color:var(--primary); }
+.role-pill.empty         { background:var(--surface-container); color:var(--on-surface-variant); }
+.role-meta { font-size:12px; color:var(--on-surface-variant); display:flex; justify-content:space-between; }
+.view-all-btn { width:100%; margin-top:14px; text-align:center; font-size:14px; font-weight:600; color:var(--primary); }
+.view-all-btn:hover { text-decoration:underline; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="logo">W</div>
+        <div><h1>WeHires</h1><p>Recruiter Portal</p></div>
+    </div>
+    <nav>
+        <a href="/dashboard" class="active"><span class="material-symbols-outlined">dashboard</span> Dashboard</a>
+        <a href="/candidates-board"><span class="material-symbols-outlined">person_search</span> Candidates</a>
+        <a href="/analytics"><span class="material-symbols-outlined">analytics</span> Analytics</a>
+        <a href="/settings"><span class="material-symbols-outlined">settings</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="avatar-sm"><span class="material-symbols-outlined" style="color:var(--outline)">person</span></div>
+        <div>
+            <div class="user-name">{{ recruiter_name }}</div>
+            <div class="user-role">Admin</div>
+        </div>
+    </div>
+</aside>
+
+<div class="main-wrapper">
+    <header class="topbar">
+        <h2>Student Recruitment Tracker</h2>
+        <div class="topbar-right">
+            <a href="/settings" class="settings-btn" title="Settings">
+                <span class="material-symbols-outlined">settings</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="canvas">
+        <div class="canvas-inner">
+
+            <div class="page-header">
+                <div>
+                    <h1>Team Overview</h1>
+                    <p>Collaborative hiring updates for your active roles.</p>
+                </div>
+                <button class="btn-outline">
+                    <span class="material-symbols-outlined" style="font-size:16px">group_add</span> Invite Team
+                </button>
+            </div>
+
+            <!-- Quick stats -->
+            <div class="stats-grid">
+                <div class="panel stat-card">
+                    <p class="stat-label">Total Candidates</p>
+                    <p class="stat-value">{{ summary.total_candidates }}</p>
+                </div>
+                <div class="panel stat-card">
+                    <p class="stat-label">In Progress</p>
+                    <p class="stat-value c-blue">{{ summary.total_in_progress }}</p>
+                </div>
+                <div class="panel stat-card">
+                    <p class="stat-label">Offered</p>
+                    <p class="stat-value c-green">{{ summary.total_offered }}</p>
+                </div>
+                <div class="panel stat-card">
+                    <p class="stat-label">Rejected</p>
+                    <p class="stat-value c-red">{{ summary.total_rejected }}</p>
+                </div>
+            </div>
+
+            <!-- Bento grid -->
+            <div class="bento">
+
+                <!-- Left: Activity feed -->
+                <section class="panel">
+                    <div class="panel-hdr">
+                        <h3><span class="material-symbols-outlined">forum</span> Recruiter Activity</h3>
+                        <a href="/candidates-board">View Board →</a>
+                    </div>
+                    <div class="activity-list">
+                        {% if recruiter_log %}
+                            {% for r in recruiter_log %}
+                            <div class="activity-item">
+                                <div class="act-avatar">{{ r.initials }}</div>
+                                <div class="act-body">
+                                    <p class="act-name">{{ r.name }}</p>
+                                    <p class="act-meta">Last login: {{ r.last_login[:10] }} &bull; {{ r.login_count }} session{{ 's' if r.login_count != 1 else '' }}</p>
+                                    <p class="act-text">Logged into the recruiter portal and is actively reviewing the candidate pipeline.</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-activity">
+                                <span class="material-symbols-outlined">people</span>
+                                No recruiter sessions yet. Login activity will appear here.
+                            </div>
+                        {% endif %}
+                    </div>
+                </section>
+
+                <!-- Right column -->
+                <div style="display:flex; flex-direction:column; gap:24px;">
+
+                    <!-- Feedback pending (candidates in Technical Test) -->
+                    <section class="panel feedback-panel">
+                        <h3><span class="material-symbols-outlined">warning</span> Feedback Pending</h3>
+                        <p class="feedback-desc">These candidates are in Technical Test — make a decision.</p>
+                        {% if pending_feedback %}
+                            <div class="feedback-items">
+                                {% for c in pending_feedback %}
+                                <div class="feedback-item">
+                                    <div class="feedback-item-left">
+                                        <div class="feed-avatar">{{ c.name[:2].upper() }}</div>
+                                        <div>
+                                            <p class="feed-name">{{ c.name }}</p>
+                                            <p class="feed-role">{{ c.role }} &bull; Tech Score: {{ c.tech_score if c.tech_score is not none else 'Pending' }}</p>
+                                        </div>
+                                    </div>
+                                    <a href="/candidates-board" class="feed-bell" title="Go to board">
+                                        <span class="material-symbols-outlined">arrow_forward</span>
+                                    </a>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="no-pending">✓ No candidates pending decision</div>
+                        {% endif %}
+                    </section>
+
+                    <!-- Active Roles -->
+                    <section class="panel roles-panel" style="flex:1">
+                        <h3>Active Roles</h3>
+                        <div class="roles-list">
+                            {% for stat in role_stats %}
+                            <div class="role-item">
+                                <div class="role-item-top">
+                                    <p class="role-name">{{ stat.role }}</p>
+                                    {% if stat.offered > 0 or stat.finalists > 0 %}
+                                    <span class="role-pill has-finalists">{{ stat.status_label }}</span>
+                                    {% elif stat.total == 0 %}
+                                    <span class="role-pill empty">{{ stat.status_label }}</span>
+                                    {% else %}
+                                    <span class="role-pill sourcing">{{ stat.status_label }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="role-meta">
+                                    <span>{{ stat.total }} applicant{{ 's' if stat.total != 1 else '' }}</span>
+                                    <span>{{ stat.in_progress }} in progress</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button class="view-all-btn" onclick="location.href='/candidates-board'">View All Roles →</button>
+                    </section>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+</body>
+</html>
