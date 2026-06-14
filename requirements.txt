@@ -1,0 +1,15 @@
+# WeHires — Python dependencies
+# Generated for Python 3.8+
+# Install with: pip install -r requirements.txt
+
+# ── Web framework ──────────────────────────────────────────
+Flask==3.1.3
+
+# ── Flask core dependencies (pinned for reproducibility) ───
+Werkzeug==3.1.7        # WSGI utilities, routing, request/response handling
+Jinja2==3.1.6          # HTML templating engine used by Flask
+click==8.3.1           # CLI toolkit used by Flask's dev server
+itsdangerous==2.2.0    # Secure session cookie signing
+MarkupSafe==3.0.3      # Safe HTML string escaping (Jinja2 dependency)
+blinker==1.9.0         # Signal support for Flask's request lifecycle hooks
+gunicorn==23.0.0
