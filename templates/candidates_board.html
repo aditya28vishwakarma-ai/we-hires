@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Candidates | WeHires</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/portal.css">
+<link rel="stylesheet" href="/static/style.css">
+<style>
+/* Override body to fix layout conflict between portal.css and kanban */
+body { overflow:hidden; }
+
+/* Top app bar */
+.topbar h2 { font-size:18px; }
+.topbar-actions { display:flex; gap:10px; align-items:center; }
+.add-btn {
+    background:var(--primary); color:var(--on-primary);
+    padding:8px 18px; border-radius:8px; font-size:14px; font-weight:600;
+    display:flex; align-items:center; gap:6px; box-shadow:0 1px 4px rgba(53,37,205,0.2);
+    transition:opacity 0.15s;
+}
+.add-btn:hover { opacity:0.9; }
+
+/* Board layout */
+.board-canvas {
+    flex:1; padding:24px 32px; overflow:hidden;
+    display:flex; flex-direction:column; background:var(--surface-bright);
+}
+.board-header { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:20px; }
+.board-header h1 { font-size:22px; font-weight:700; }
+.board-header p  { font-size:14px; color:var(--on-surface-variant); margin-top:2px; }
+.board-controls  { display:flex; gap:8px; }
+.board-control-btn {
+    display:flex; align-items:center; gap:6px;
+    padding:6px 12px; border:1px solid var(--outline-variant);
+    border-radius:6px; font-size:13px; font-weight:600;
+    color:var(--on-surface-variant); transition:background 0.15s;
+}
+.board-control-btn:hover { background:var(--surface-container); }
+
+/* Kanban columns */
+.kanban-wrap {
+    display:flex; gap:20px; overflow-x:auto; flex:1;
+    padding-bottom:12px; align-items:flex-start;
+}
+.kanban-wrap::-webkit-scrollbar { height:6px; }
+.kanban-wrap::-webkit-scrollbar-track { background:var(--surface-container-low); border-radius:4px; }
+.kanban-wrap::-webkit-scrollbar-thumb { background:var(--outline-variant); border-radius:4px; }
+
+.col {
+    width:300px; flex-shrink:0;
+    background:var(--surface-container);
+    border-radius:12px;
+    display:flex; flex-direction:column;
+    max-height:100%;
+    border:1px solid rgba(199,196,216,0.3);
+}
+.col-header {
+    padding:14px 16px;
+    border-bottom:1px solid rgba(199,196,216,0.2);
+    display:flex; justify-content:space-between; align-items:center;
+}
+.col-title {
+    font-size:15px; font-weight:700;
+    display:flex; align-items:center; gap:8px;
+}
+.col-count {
+    background:var(--surface-variant); color:var(--on-surface-variant);
+    font-size:12px; padding:2px 8px; border-radius:100px; font-weight:500;
+}
+.col-more { color:var(--on-surface-variant); display:flex; }
+.col-more:hover { color:var(--primary); }
+
+.col-body {
+    padding:12px; display:flex; flex-direction:column;
+    gap:10px; overflow-y:auto; min-height:80px; flex:1;
+}
+/* Drop zone highlight */
+.col-body.drag-over { background:rgba(79,70,229,0.04); border:2px dashed var(--primary-container); border-radius:8px; }
+
+/* Cards */
+.kcard {
+    background:var(--surface-container-lowest);
+    border-radius:10px; padding:14px;
+    border:1px solid rgba(199,196,216,0.5);
+    display:flex; flex-direction:column; gap:10px;
+    cursor:grab; transition:border-color 0.15s, box-shadow 0.15s;
+    box-shadow:0 1px 3px rgba(0,0,0,0.04);
+}
+.kcard:hover { border-color:var(--primary); box-shadow:0 4px 12px rgba(53,37,205,0.1); }
+.kcard.locked { cursor:not-allowed; opacity:0.75; border-color:rgba(186,26,26,0.4); }
+.kcard.dragging { opacity:0.5; }
+
+.kcard-top { display:flex; align-items:flex-start; gap:10px; }
+.kcard-initials {
+    width:34px; height:34px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:13px; color:white;
+}
+.bg-applied    { background:var(--secondary-container); color:var(--on-secondary-container); }
+.bg-interview  { background:var(--primary-container); }
+.bg-tech       { background:#f59e0b; }
+.bg-offered    { background:#16a34a; }
+.bg-rejected   { background:var(--error-container); color:var(--on-error-container); }
+
+.kcard-name  { font-size:14px; font-weight:700; line-height:1.2; }
+.kcard-role  { font-size:12px; color:var(--on-surface-variant); margin-top:2px; }
+.kcard-name-rejected { text-decoration:line-through; color:var(--on-surface-variant); }
+.lock-icon   { margin-left:auto; color:var(--outline-variant); font-size:16px; }
+
+.kcard-footer {
+    display:flex; justify-content:space-between; align-items:center;
+    border-top:1px solid rgba(199,196,216,0.2); padding-top:8px;
+}
+.kcard-tag {
+    font-size:11px; font-weight:700; padding:2px 8px; border-radius:3px;
+}
+.tag-urgent  { background:var(--error-container); color:var(--on-error-container); }
+.tag-normal  { background:var(--surface-container-high); color:var(--on-surface); }
+.tag-closed  { background:var(--surface-variant); color:var(--on-surface-variant); }
+.kcard-days  { font-size:11px; color:var(--on-surface-variant); display:flex; align-items:center; gap:4px; }
+
+/* Score badge on card */
+.kcard-score {
+    font-size:11px; color:var(--on-surface-variant);
+    display:flex; align-items:center; gap:4px;
+}
+
+/* Modal for adding candidate */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal-box {
+    background:white; border-radius:14px; padding:28px;
+    width:400px; max-width:90vw;
+    box-shadow:0 8px 32px rgba(0,0,0,0.15);
+    animation:slideUp 0.25s ease-out;
+}
+@keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.modal-box h3 { font-size:18px; font-weight:700; margin-bottom:18px; }
+.modal-field { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+.modal-field label { font-size:12px; font-weight:600; color:var(--on-surface-variant); text-transform:uppercase; letter-spacing:0.05em; }
+.modal-field input, .modal-field select {
+    padding:10px 12px; border:1.5px solid var(--outline-variant); border-radius:8px;
+    font-family:inherit; font-size:14px; color:var(--on-surface);
+    background:var(--surface-container-low);
+}
+.modal-field input:focus, .modal-field select:focus { outline:none; border-color:var(--primary); }
+.modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
+.modal-cancel { padding:9px 18px; border-radius:8px; font-size:14px; font-weight:600; color:var(--on-surface-variant); background:var(--surface-container); }
+.modal-submit { padding:9px 18px; border-radius:8px; font-size:14px; font-weight:600; color:white; background:var(--primary); }
+.modal-error  { color:var(--error); font-size:13px; margin-top:8px; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="logo">W</div>
+        <div><h1>WeHires</h1><p>Recruiter Portal</p></div>
+    </div>
+    <nav>
+        <a href="/dashboard"><span class="material-symbols-outlined">dashboard</span> Dashboard</a>
+        <a href="/candidates-board" class="active"><span class="material-symbols-outlined">person_search</span> Candidates</a>
+        <a href="/analytics"><span class="material-symbols-outlined">analytics</span> Analytics</a>
+        <a href="/settings"><span class="material-symbols-outlined">settings</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="avatar-sm"><span class="material-symbols-outlined" style="color:var(--outline)">person</span></div>
+        <div>
+            <div class="user-name">{{ recruiter_name }}</div>
+            <div class="user-role">Admin</div>
+        </div>
+    </div>
+</aside>
+
+<div class="main-wrapper">
+    <header class="topbar">
+        <h2>Student Recruitment Tracker</h2>
+        <div class="topbar-actions">
+            <a href="/settings" class="settings-btn" title="Settings">
+                <span class="material-symbols-outlined">settings</span>
+            </a>
+            <button class="add-btn" onclick="openAddModal()">
+                <span class="material-symbols-outlined" style="font-size:16px">add</span> Add Candidate
+            </button>
+        </div>
+    </header>
+
+    <div class="board-canvas">
+        <div class="board-header">
+            <div>
+                <h1>Mini ATS</h1>
+                <p>Manage student applications and interview stages.</p>
+            </div>
+            <div class="board-controls">
+                <button class="board-control-btn"><span class="material-symbols-outlined" style="font-size:16px">filter_list</span> Filter</button>
+                <button class="board-control-btn"><span class="material-symbols-outlined" style="font-size:16px">sort</span> Sort</button>
+            </div>
+        </div>
+
+        <div class="kanban-wrap" id="kanbanBoard">
+            {% for stage_name, col_candidates in stages.items() %}
+            <div class="col" id="col-{{ stage_name.replace(' ','-') }}" data-stage="{{ stage_name }}">
+                <div class="col-header">
+                    <span class="col-title">
+                        {{ stage_name }}
+                        <span class="col-count" id="count-{{ stage_name.replace(' ','-') }}">{{ col_candidates|length }}</span>
+                    </span>
+                    <button class="col-more"><span class="material-symbols-outlined" style="font-size:20px">more_horiz</span></button>
+                </div>
+                <div class="col-body" id="body-{{ stage_name.replace(' ','-') }}"
+                     ondragover="event.preventDefault(); this.classList.add('drag-over')"
+                     ondragleave="this.classList.remove('drag-over')"
+                     ondrop="onDrop(event, '{{ stage_name }}')">
+                    {% for c in col_candidates %}
+                    {% set initials = (c.name.split()[0][0] + (c.name.split()[1][0] if c.name.split()|length > 1 else '')).upper() %}
+                    {% set col_class = {'Applied':'bg-applied','Interviewing':'bg-interview','Technical Test':'bg-tech','Offered':'bg-offered','Rejected':'bg-rejected'} %}
+                    <div class="kcard {% if c.is_locked %}locked{% endif %}"
+                         id="card-{{ c.id }}"
+                         draggable="{{ 'false' if c.is_locked else 'true' }}"
+                         ondragstart="onDragStart(event, '{{ c.id }}')"
+                         onclick="openDetailModal('{{ c.id }}')"
+                         data-stage="{{ c.stage }}">
+                        <div class="kcard-top">
+                            <div class="kcard-initials {{ col_class.get(c.stage, 'bg-applied') }}">{{ initials }}</div>
+                            <div>
+                                <div class="kcard-name {% if c.is_locked %}kcard-name-rejected{% endif %}">{{ c.name }}</div>
+                                <div class="kcard-role">{{ c.role }}</div>
+                            </div>
+                            {% if c.is_locked %}<span class="material-symbols-outlined lock-icon" style="font-variation-settings:'FILL' 1;">lock</span>{% endif %}
+                        </div>
+                        <div class="kcard-footer">
+                            {% if c.is_locked %}
+                                <span class="kcard-tag tag-closed">Closed</span>
+                            {% elif c.stage == 'Offered' %}
+                                <span class="kcard-tag" style="background:rgba(111,251,190,0.25);color:var(--tertiary)">Offered</span>
+                            {% else %}
+                                <span class="kcard-tag tag-normal">{{ c.stage }}</span>
+                            {% endif %}
+                            {% if c.tech_score is not none and c.stage not in ('Applied','Interviewing') %}
+                                <span class="kcard-score"><span class="material-symbols-outlined" style="font-size:13px">grade</span> {{ c.tech_score }}/100</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <!-- empty drop zone placeholder -->
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Candidate Modal -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal-box">
+        <h3>Add Candidate</h3>
+        <div class="modal-field"><label>Full Name</label><input type="text" id="add-name" placeholder="e.g. Asha Rao"></div>
+        <div class="modal-field"><label>Roll Number</label><input type="text" id="add-roll" placeholder="e.g. CS2026-07"></div>
+        <div class="modal-field">
+            <label>Role</label>
+            <select id="add-role">
+                <option value="">Select a role</option>
+                <option>Software Engineer</option>
+                <option>Frontend Developer</option>
+                <option>Backend Developer</option>
+                <option>Data Analyst</option>
+                <option>DevOps Engineer</option>
+            </select>
+        </div>
+        <p class="modal-error" id="add-error"></p>
+        <div class="modal-actions">
+            <button class="modal-cancel" onclick="closeAddModal()">Cancel</button>
+            <button class="modal-submit" onclick="submitAddCandidate()">Add</button>
+        </div>
+    </div>
+</div>
+
+<!-- Detail / Score modal (reuse existing modals from script.js but inline here for independence) -->
+<div class="modal-overlay" id="scoreModalOverlay" style="display:none">
+    <div class="modal-box">
+        <h3 id="scoreModalTitle">Enter Score</h3>
+        <p id="scoreModalDescription" style="font-size:14px;color:var(--on-surface-variant);margin-bottom:14px;line-height:1.5"></p>
+        <div class="modal-field"><label>Score (0–100)</label><input type="number" id="scoreModalInput" min="0" max="100" placeholder="0 - 100"></div>
+        <p class="modal-error" id="scoreModalError"></p>
+        <div class="modal-actions">
+            <button class="modal-cancel" id="scoreModalCancel">Cancel</button>
+            <button class="modal-submit" id="scoreModalSubmit">Submit</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="errorModalOverlay" style="display:none">
+    <div class="modal-box" style="border-top:4px solid var(--error)">
+        <h3 id="errorModalTitle" style="color:var(--error)">Action Not Allowed</h3>
+        <p id="errorModalMessage" style="font-size:14px;color:var(--on-surface-variant);margin-top:8px"></p>
+        <div class="modal-actions"><button class="modal-submit" id="errorModalClose">OK</button></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="rejectionModalOverlay" style="display:none">
+    <div class="modal-box" style="border-top:4px solid #f59e0b">
+        <h3 id="rejectionModalTitle" style="color:#92400e">Candidate Rejected</h3>
+        <p id="rejectionModalMessage" style="font-size:14px;color:var(--on-surface-variant);margin-top:8px"></p>
+        <div class="modal-actions"><button class="modal-submit" id="rejectionModalClose">OK</button></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="detailModalOverlay" style="display:none">
+    <div class="modal-box">
+        <h3 id="detailModalName"></h3>
+        <div id="detailModalBody" style="margin-top:14px"></div>
+        <div class="modal-actions"><button class="modal-submit" id="detailModalClose">Close</button></div>
+    </div>
+</div>
+
+<script>
+// ── Candidate cache ──────────────────────────────
+let candidateCache = {};
+
+function buildCache(candidates) {
+    candidateCache = {};
+    candidates.forEach(c => { candidateCache[c.id] = c; });
+}
+
+// ── Load & render ────────────────────────────────
+function fetchAndRender() {
+    fetch('/api/candidates')
+        .then(r => r.json())
+        .then(candidates => {
+            buildCache(candidates);
+            renderBoard(candidates);
+        });
+}
+
+function renderBoard(candidates) {
+    const stages = ['Applied','Interviewing','Technical Test','Offered','Rejected'];
+    stages.forEach(stage => {
+        const body = document.getElementById('body-' + stage.replace(/ /g,'-'));
+        const countEl = document.getElementById('count-' + stage.replace(/ /g,'-'));
+        const cols = candidates.filter(c => c.stage === stage);
+        if (countEl) countEl.textContent = cols.length;
+        if (!body) return;
+        body.innerHTML = '';
+        cols.forEach(c => body.appendChild(makeCard(c)));
+    });
+}
+
+function initials(name) {
+    const parts = name.trim().split(' ');
+    return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+}
+
+const STAGE_BG = {
+    'Applied':'bg-applied','Interviewing':'bg-interview',
+    'Technical Test':'bg-tech','Offered':'bg-offered','Rejected':'bg-rejected'
+};
+
+function makeCard(c) {
+    const card = document.createElement('div');
+    card.className = 'kcard' + (c.is_locked ? ' locked' : '');
+    card.id = 'card-' + c.id;
+    card.draggable = !c.is_locked;
+    card.dataset.stage = c.stage;
+
+    const showScore = !['Applied','Interviewing'].includes(c.stage);
+    const scoreHtml = (showScore && c.tech_score != null)
+        ? `<span class="kcard-score"><span class="material-symbols-outlined" style="font-size:13px">grade</span> ${c.tech_score}/100</span>`
+        : '';
+
+    let tagHtml;
+    if (c.is_locked) tagHtml = `<span class="kcard-tag tag-closed">Closed</span>`;
+    else if (c.stage === 'Offered') tagHtml = `<span class="kcard-tag" style="background:rgba(111,251,190,0.25);color:var(--tertiary)">Offered</span>`;
+    else tagHtml = `<span class="kcard-tag tag-normal">${c.stage}</span>`;
+
+    card.innerHTML = `
+        <div class="kcard-top">
+            <div class="kcard-initials ${STAGE_BG[c.stage]||'bg-applied'}">${initials(c.name)}</div>
+            <div>
+                <div class="kcard-name ${c.is_locked?'kcard-name-rejected':''}">${escHtml(c.name)}</div>
+                <div class="kcard-role">${escHtml(c.role)}</div>
+            </div>
+            ${c.is_locked ? '<span class="material-symbols-outlined lock-icon" style="font-variation-settings:\'FILL\' 1">lock</span>' : ''}
+        </div>
+        <div class="kcard-footer">${tagHtml}${scoreHtml}</div>
+    `;
+
+    if (!c.is_locked) {
+        card.addEventListener('dragstart', e => onDragStart(e, c.id));
+    }
+    card.addEventListener('click', e => { if (!e._fromDrag) openDetailModal(c.id); });
+    return card;
+}
+
+// ── Drag and drop ────────────────────────────────
+let draggingId = null;
+
+function onDragStart(e, id) {
+    draggingId = id;
+    e.dataTransfer.setData('text/plain', String(id));
+    setTimeout(() => { const el = document.getElementById('card-'+id); if(el) el.classList.add('dragging'); }, 0);
+}
+
+function onDrop(e, targetStage) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    const id = parseInt(e.dataTransfer.getData('text/plain'));
+    const card = document.getElementById('card-'+id);
+    if (card) card.classList.remove('dragging');
+    const candidate = candidateCache[id];
+    if (!candidate) return;
+
+    if (candidate.is_locked) {
+        openErrorModal('Candidate Locked', `${candidate.name} is locked (Rejected) and cannot be moved.`);
+        return;
+    }
+    if (targetStage === candidate.stage) return;
+
+    const required = { 'Technical Test':'Interviewing', 'Offered':'Technical Test' };
+    if (required[targetStage] && candidate.stage !== required[targetStage]) {
+        openErrorModal('Stage Skipped', `${candidate.name} must complete "${required[targetStage]}" before "${targetStage}".`);
+        return;
+    }
+
+    if (targetStage === 'Technical Test') {
+        openScoreModal({
+            title: 'Interview Score',
+            description: `Enter the interview score for ${candidate.name}. Score ≥ 50 advances to Technical Test; below 50 auto-rejects.`,
+            onSubmit: score => sendMove(id, targetStage, null, score, candidate)
+        });
+        return;
+    }
+    if (targetStage === 'Offered') {
+        openScoreModal({
+            title: 'Technical Test Score',
+            description: `Enter the technical test score for ${candidate.name}. Score ≥ 70 results in an Offer; below 70 auto-rejects.`,
+            onSubmit: score => sendMove(id, targetStage, score, null, candidate)
+        });
+        return;
+    }
+    sendMove(id, targetStage, null, null, candidate);
+}
+
+function sendMove(id, targetStage, techScore, interviewScore, candidate) {
+    const payload = { target_stage: targetStage };
+    if (techScore !== null) payload.tech_score = techScore;
+    if (interviewScore !== null) payload.interview_score = interviewScore;
+
+    fetch(`/api/candidates/${id}/move`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+    })
+    .then(async r => {
+        const data = await r.json();
+        if (!r.ok) {
+            const titles = {403:'Candidate Locked',404:'Not Found',400:'Invalid Move'};
+            openErrorModal(titles[r.status]||'Error', data.error||'Something went wrong.');
+        } else if (data.candidate && data.candidate.is_locked && data.candidate.stage === 'Rejected') {
+            const name = candidate?.name || data.candidate.name;
+            let msg = `${name} was automatically rejected.`;
+            if (interviewScore !== null) msg = `${name} scored ${interviewScore} on the Interview (minimum 50). Auto-rejected.`;
+            if (techScore !== null) msg = `${name} scored ${techScore} on the Technical Test (minimum 70). Auto-rejected.`;
+            openRejectionModal('Candidate Rejected', msg);
+        }
+        fetchAndRender();
+    });
+}
+
+// ── Add candidate modal ──────────────────────────
+function openAddModal() {
+    document.getElementById('add-name').value = '';
+    document.getElementById('add-roll').value = '';
+    document.getElementById('add-role').value = '';
+    document.getElementById('add-error').textContent = '';
+    document.getElementById('addModal').classList.add('open');
+}
+function closeAddModal() { document.getElementById('addModal').classList.remove('open'); }
+
+async function submitAddCandidate() {
+    const name = document.getElementById('add-name').value.trim();
+    const roll = document.getElementById('add-roll').value.trim();
+    const role = document.getElementById('add-role').value;
+    const errEl = document.getElementById('add-error');
+    if (!name || !roll || !role) { errEl.textContent = 'All fields are required.'; return; }
+
+    const res = await fetch('/api/candidates', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name, roll_number:roll, role})
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error||'Error adding candidate.'; return; }
+    closeAddModal();
+    fetchAndRender();
+}
+
+// ── Score modal ───────────────────────────────────
+const scoreOverlay   = document.getElementById('scoreModalOverlay');
+const scoreTitle     = document.getElementById('scoreModalTitle');
+const scoreDesc      = document.getElementById('scoreModalDescription');
+const scoreInput     = document.getElementById('scoreModalInput');
+const scoreErr       = document.getElementById('scoreModalError');
+let scoreHandler = null;
+
+function openScoreModal({title, description, onSubmit}) {
+    scoreTitle.textContent = title;
+    scoreDesc.textContent = description;
+    scoreInput.value = '';
+    scoreErr.textContent = '';
+    scoreHandler = onSubmit;
+    scoreOverlay.style.display = 'flex';
+    setTimeout(() => scoreInput.focus(), 50);
+}
+function closeScoreModal() { scoreOverlay.style.display = 'none'; scoreHandler = null; }
+
+document.getElementById('scoreModalCancel').onclick = closeScoreModal;
+document.getElementById('scoreModalSubmit').onclick = function() {
+    const raw = scoreInput.value.trim();
+    const n = Number(raw);
+    if (raw === '' || !Number.isInteger(n) || n < 0 || n > 100) {
+        scoreErr.textContent = 'Enter a whole number between 0 and 100.'; return;
+    }
+    const h = scoreHandler; closeScoreModal(); if(h) h(n);
+};
+scoreInput.addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('scoreModalSubmit').click(); });
+
+// ── Error modal ───────────────────────────────────
+const errOverlay = document.getElementById('errorModalOverlay');
+function openErrorModal(title, msg) {
+    document.getElementById('errorModalTitle').textContent = title;
+    document.getElementById('errorModalMessage').textContent = msg;
+    errOverlay.style.display = 'flex';
+}
+document.getElementById('errorModalClose').onclick = () => errOverlay.style.display = 'none';
+
+// ── Rejection modal ───────────────────────────────
+const rejOverlay = document.getElementById('rejectionModalOverlay');
+function openRejectionModal(title, msg) {
+    document.getElementById('rejectionModalTitle').textContent = title;
+    document.getElementById('rejectionModalMessage').textContent = msg;
+    rejOverlay.style.display = 'flex';
+}
+document.getElementById('rejectionModalClose').onclick = () => rejOverlay.style.display = 'none';
+
+// ── Detail modal ──────────────────────────────────
+const detailOverlay = document.getElementById('detailModalOverlay');
+function openDetailModal(id) {
+    const c = candidateCache[id]; if (!c) return;
+    document.getElementById('detailModalName').textContent = c.name;
+    const hide = ['Applied','Interviewing'].includes(c.stage);
+    let html = `
+        <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;font-size:14px;padding:8px 0;border-bottom:1px solid var(--outline-variant)">
+            <span style="color:var(--on-surface-variant)">Roll Number</span>
+            <span style="font-family:monospace;font-weight:600">${escHtml(c.roll_number)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;padding:8px 0;border-bottom:1px solid var(--outline-variant)">
+            <span style="color:var(--on-surface-variant)">Role</span>
+            <span style="font-weight:600">${escHtml(c.role)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;padding:8px 0;border-bottom:1px solid var(--outline-variant)">
+            <span style="color:var(--on-surface-variant)">Stage</span>
+            <span style="font-weight:600">${escHtml(c.stage)}</span>
+        </div>`;
+    if (!hide && c.interview_score != null)
+        html += `<div style="display:flex;justify-content:space-between;font-size:14px;padding:8px 0;border-bottom:1px solid var(--outline-variant)"><span style="color:var(--on-surface-variant)">Interview Score</span><span style="font-family:monospace;font-weight:600">${c.interview_score}/100</span></div>`;
+    if (!hide && c.tech_score != null)
+        html += `<div style="display:flex;justify-content:space-between;font-size:14px;padding:8px 0;border-bottom:1px solid var(--outline-variant)"><span style="color:var(--on-surface-variant)">Tech Score</span><span style="font-family:monospace;font-weight:600">${c.tech_score}/100</span></div>`;
+    if (c.stage === 'Rejected' && c.rejection_reason)
+        html += `<div style="margin-top:10px;padding:12px;background:#fbeaea;border-radius:8px;border-left:4px solid var(--error);font-size:13px;color:#8a2a2a"><strong style="display:block;text-transform:uppercase;font-size:11px;letter-spacing:0.06em;color:var(--error);margin-bottom:4px">Rejection Reason</strong>${escHtml(c.rejection_reason)}</div>`;
+    html += '</div>';
+    document.getElementById('detailModalBody').innerHTML = html;
+    detailOverlay.style.display = 'flex';
+}
+document.getElementById('detailModalClose').onclick = () => detailOverlay.style.display = 'none';
+
+function escHtml(s) {
+    const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+}
+
+// ── Close modals on overlay click ─────────────────
+[scoreOverlay, errOverlay, rejOverlay, detailOverlay].forEach(el => {
+    el.addEventListener('click', e => { if(e.target === el) el.style.display = 'none'; });
+});
+document.getElementById('addModal').addEventListener('click', e => {
+    if(e.target === document.getElementById('addModal')) closeAddModal();
+});
+
+// ── Init ──────────────────────────────────────────
+fetchAndRender();
+</script>
+</body>
+</html>
